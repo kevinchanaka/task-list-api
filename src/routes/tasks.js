@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const knex = require('knex');
-const config = require('../knexfile')[process.env.NODE_ENV || 'development'];
+const config = require('../../knexfile')[process.env.NODE_ENV || 'development'];
 const database = knex(config);
 
 router.get('/', function(req, res) {
@@ -56,5 +56,3 @@ router.put('/:id', function(req, res) {
 });
 
 module.exports = router;
-
-
