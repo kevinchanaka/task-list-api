@@ -1,4 +1,7 @@
-const expect = require('chai').expect;
+const chai = require('chai');
+const expect = chai.expect;
+const chaiSubset = require('chai-subset');
+chai.use(chaiSubset);
 const app = require('../src/app');
 const request = require('supertest');
 
@@ -32,11 +35,16 @@ describe('Tasks', () => {
     await database('tasks').select().del();
   });
 
+  after(async () => {
+    await database.destroy();
+  });
+
   describe('POST /tasks', () => {
     it('should be able to add a task', async () => {
       const res = await request(app).post('/tasks').set(headers).send(task);
       expect(res.status).to.equal(200);
       expect(res.body).to.have.property('id');
+      expect(res.body.id).to.be.a('number');
     });
 
     it('should not be able to pass any null field(s)', async () => {
@@ -60,7 +68,7 @@ describe('Tasks', () => {
           .send(task)).body.id;
       const getTask = await request(app).get(`/tasks/${taskId}`);
       expect(getTask.status).to.equal(200);
-      expect(getTask.body).to.equal(task);
+      expect(getTask.body).to.containSubset(task);
     });
 
     it('should return 404 for non-existent task or invalid id', async () => {
@@ -80,7 +88,7 @@ describe('Tasks', () => {
           .set(headers).send(modifiedTask);
       expect(modifyTask.status).to.equal(200);
       const getTask = await request(app).get(`/tasks/${taskId}`);
-      expect(getTask.body).to.equal(modifiedTask);
+      expect(getTask.body).to.containSubset(modifiedTask);
     });
   });
 
@@ -95,3 +103,4 @@ describe('Tasks', () => {
     });
   });
 });
+
