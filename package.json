@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www",
+    "start": "nodemon ./bin/www",
     "test": "mocha"
   },
   "dependencies": {
@@ -25,6 +25,7 @@
     "eslint": "^7.18.0",
     "eslint-config-google": "^0.14.0",
     "mocha": "^8.2.1",
+    "nodemon": "^2.0.7",
     "supertest": "^6.1.3"
   }
 }
