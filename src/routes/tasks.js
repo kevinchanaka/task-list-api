@@ -7,58 +7,66 @@ const database = knex(config);
 
 const taskSchema = require('../schema/task');
 
-router.get('/', function(req, res) {
-  database('tasks').select().then(function(tasks) {
+router.get('/', async (req, res) => {
+  try {
+    const tasks = await database('tasks').select();
     res.json(tasks);
-  }).catch(function(error) {
-    res.json(error);
-  });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({message: 'Internal error'});
+  }
 });
 
-router.get('/:id', function(req, res) {
-  database('tasks').select().where({id: req.params.id}).first()
-      .then(function(task) {
-        if (task != null) {
-          res.json(task);
-        } else {
-          res.status(404).json({message: 'Task not found'});
-        }
-      }).catch(function(error) {
-        res.json(error);
-      });
+router.get('/:id', async (req, res) => {
+  try {
+    const task = await database('tasks').select().where({id: req.params.id})
+        .first();
+    if (task != null) {
+      res.json(task);
+    } else {
+      res.status(404).json({message: 'Task not found'});
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({message: 'Internal error'});
+  }
 });
 
-router.post('/', function(req, res) {
+router.post('/', async (req, res) => {
   const data = {name: req.body.name, description: req.body.description};
   const validate = taskSchema.validate(data);
   if (validate.error) {
     res.status(404).json({message: 'Invalid task'});
   } else {
-    database('tasks').insert(data).then(function(result) {
-      res.json({message: 'Task added', id: result[0]});
-    }).catch(function(error) {
-      res.json(error);
-    });
+    try {
+      const addTask = await database('tasks').insert(data);
+      res.json({message: 'Task added', id: addTask[0]});
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({message: 'Internal error'});
+    }
   }
 });
 
-router.delete('/:id', function(req, res) {
-  database('tasks').where({id: req.params.id}).del().then(function(result) {
-    res.json(result);
-  }).catch(function(error) {
-    res.json(error);
-  });
+router.delete('/:id', async (req, res) => {
+  try {
+    await database('tasks').where({id: req.params.id}).del();
+    res.json({message: 'Task deleted'});
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({message: 'Internal error'});
+  }
 });
 
-router.put('/:id', function(req, res) {
-  database('tasks').where({id: req.params.id}).update({
-    'name': req.body.name,
-    'description': req.body.description,
-  }).then(function(result) {
-    res.json(result);
-  }).catch(function(error) {
-    res.json(error);
-  });
+router.put('/:id', async (req, res) => {
+  const data = {name: req.body.name, description: req.body.description};
+  try {
+    await database('tasks').where({id: req.params.id}).update(data);
+    res.json({message: 'Task modified'});
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({message: 'Internal error'});
+  }
 });
 
 module.exports = router;
