@@ -61,12 +61,17 @@ router.delete('/:id', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   const data = {name: req.body.name, description: req.body.description};
-  try {
-    await database('tasks').where({id: req.params.id}).update(data);
-    res.json({message: 'Task modified'});
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({message: 'Internal error'});
+  const validate = taskSchema.validate(data);
+  if (validate.error) {
+    res.status(404).json({message: 'Invalid task'});
+  } else {
+    try {
+      await database('tasks').where({id: req.params.id}).update(data);
+      res.json({message: 'Task modified'});
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({message: 'Internal error'});
+    }
   }
 });
 
