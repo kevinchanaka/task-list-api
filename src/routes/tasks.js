@@ -1,8 +1,9 @@
+const {NODE_ENV} = require('../../config');
 const express = require('express');
 const router = new express.Router();
 
 const knex = require('knex');
-const config = require('../../knexfile')[process.env.NODE_ENV || 'development'];
+const config = require('../../knexfile')[NODE_ENV];
 const database = knex(config);
 
 const taskSchema = require('../schema/task');

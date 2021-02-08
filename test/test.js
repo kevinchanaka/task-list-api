@@ -1,3 +1,4 @@
+const {NODE_ENV} = require('../config');
 const chai = require('chai');
 const expect = chai.expect;
 const chaiSubset = require('chai-subset');
@@ -6,10 +7,9 @@ const app = require('../src/app');
 const request = require('supertest');
 
 const knex = require('knex');
-const config = require('../knexfile')[process.env.NODE_ENV || 'development'];
+const config = require('../knexfile')[NODE_ENV];
 const database = knex(config);
 
-require('dotenv').config();
 const headers = {'Content-Type': 'application/json'};
 const task = {name: 'task1', description: 'desc1'};
 const tasks = [
