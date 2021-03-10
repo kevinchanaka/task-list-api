@@ -1,16 +1,12 @@
-const {NODE_ENV} = require('../../config');
 const express = require('express');
 const router = new express.Router();
 
-const knex = require('knex');
-const config = require('../../knexfile')[NODE_ENV];
-const database = knex(config);
-
-const taskSchema = require('../schema/task');
+const TaskServiceClass = require('../services/TaskService');
+const TaskService = new TaskServiceClass();
 
 router.get('/', async (req, res) => {
   try {
-    const tasks = await database('tasks').select();
+    const tasks = await TaskService.getTasks();
     res.json(tasks);
   } catch (error) {
     console.log(error);
@@ -20,8 +16,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const task = await database('tasks').select().where({id: req.params.id})
-        .first();
+    const task = await TaskService.getTask(req.params.id);
     if (task != null) {
       res.json(task);
     } else {
@@ -34,24 +29,21 @@ router.get('/:id', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const data = {name: req.body.name, description: req.body.description};
-  const validate = taskSchema.validate(data);
-  if (validate.error) {
-    res.status(404).json({message: 'Invalid task'});
-  } else {
-    try {
-      const addTask = await database('tasks').insert(data);
-      res.json({message: 'Task added', id: addTask[0]});
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({message: 'Internal error'});
+  try {
+    const createTask = await TaskService.createTask(req.body);
+    if (createTask == null) {
+      res.status(404).json({message: 'Invalid task'});
+    } else {
+      res.json(createTask);
     }
+  } catch (error) {
+    res.status(500).json({message: 'Internal error'});
   }
 });
 
 router.delete('/:id', async (req, res) => {
   try {
-    await database('tasks').where({id: req.params.id}).del();
+    await TaskService.deleteTask(req.params.id);
     res.json({message: 'Task deleted'});
   } catch (error) {
     console.log(error);
@@ -61,17 +53,16 @@ router.delete('/:id', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   const data = {name: req.body.name, description: req.body.description};
-  const validate = taskSchema.validate(data);
-  if (validate.error) {
-    res.status(404).json({message: 'Invalid task'});
-  } else {
-    try {
-      await database('tasks').where({id: req.params.id}).update(data);
+  try {
+    const modifyTask = await TaskService
+        .modifyTask({id: req.params.id, ...data});
+    if (modifyTask == null) {
+      res.status(404).json({message: 'Invalid task'});
+    } else {
       res.json({message: 'Task modified'});
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({message: 'Internal error'});
     }
+  } catch (error) {
+    res.status(500).json({message: 'Internal error'});
   }
 });
 

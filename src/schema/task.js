@@ -1,4 +1,4 @@
-const {NAME_LENGTH, DESCRIPTION_LENGTH} = require('../../config');
+const {NAME_LENGTH, DESCRIPTION_LENGTH} = require('../config');
 const Joi = require('joi');
 
 const task = Joi.object({

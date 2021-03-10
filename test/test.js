@@ -1,4 +1,4 @@
-const {NODE_ENV} = require('../config');
+const {NODE_ENV} = require('../src/config');
 const chai = require('chai');
 const expect = chai.expect;
 const chaiSubset = require('chai-subset');
@@ -114,7 +114,7 @@ describe('Tasks', () => {
   describe('DELETE /tasks', () => {
     it('should be able to delete a task', async () => {
       const taskId = (await request(app).post('/tasks').set(headers)
-          .send(task)).body.id;
+          .send(tasks[0])).body.id;
       const delTask = await request(app).delete(`/tasks/${taskId}`);
       expect(delTask.status).to.equal(200);
       const getTask = await request(app).get(`/tasks/${taskId}`);
