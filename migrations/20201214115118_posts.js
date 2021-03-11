@@ -1,8 +1,8 @@
-const {NAME_LENGTH, DESCRIPTION_LENGTH} = require('../config');
+const {NAME_LENGTH, DESCRIPTION_LENGTH, UUID_LENGTH} = require('../src/config');
 
 exports.up = function(knex) {
   return knex.schema.createTable('tasks', function(table) {
-    table.increments('id');
+    table.string('id', UUID_LENGTH);
     table.string('name', NAME_LENGTH);
     table.string('description', DESCRIPTION_LENGTH);
   });

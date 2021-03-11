@@ -1,4 +1,3 @@
-const {NODE_ENV} = require('../src/config');
 const chai = require('chai');
 const expect = chai.expect;
 const chaiSubset = require('chai-subset');
@@ -6,9 +5,7 @@ chai.use(chaiSubset);
 const app = require('../src/app');
 const request = require('supertest');
 
-const knex = require('knex');
-const config = require('../knexfile')[NODE_ENV];
-const database = knex(config);
+const database = require('../src/db');
 
 const headers = {'Content-Type': 'application/json'};
 const tasks = [
@@ -49,7 +46,6 @@ describe('Tasks', () => {
       const res = await request(app).post('/tasks').set(headers).send(tasks[0]);
       expect(res.status).to.equal(200);
       expect(res.body).to.have.property('id');
-      expect(res.body.id).to.be.a('number');
     });
 
     it('should not be able to add invalid tasks', async () => {

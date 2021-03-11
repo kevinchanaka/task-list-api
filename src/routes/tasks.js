@@ -1,8 +1,6 @@
 const express = require('express');
 const router = new express.Router();
-
-const TaskServiceClass = require('../services/TaskService');
-const TaskService = new TaskServiceClass();
+const TaskService = require('../services/TaskService');
 
 router.get('/', async (req, res) => {
   try {
@@ -31,10 +29,10 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const createTask = await TaskService.createTask(req.body);
-    if (createTask == null) {
+    if (createTask.error) {
       res.status(404).json({message: 'Invalid task'});
     } else {
-      res.json(createTask);
+      res.json(createTask.value);
     }
   } catch (error) {
     res.status(500).json({message: 'Internal error'});
@@ -52,11 +50,10 @@ router.delete('/:id', async (req, res) => {
 });
 
 router.put('/:id', async (req, res) => {
-  const data = {name: req.body.name, description: req.body.description};
   try {
     const modifyTask = await TaskService
-        .modifyTask({id: req.params.id, ...data});
-    if (modifyTask == null) {
+        .modifyTask({id: req.params.id, ...req.body});
+    if (modifyTask.error) {
       res.status(404).json({message: 'Invalid task'});
     } else {
       res.json({message: 'Task modified'});
