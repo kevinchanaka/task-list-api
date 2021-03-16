@@ -1,24 +1,13 @@
 const chai = require('chai');
-const expect = chai.expect;
-const chaiSubset = require('chai-subset');
-chai.use(chaiSubset);
-const app = require('../src/app');
 const request = require('supertest');
+const chaiSubset = require('chai-subset');
+const {tasks, invalidTasks} = require('../data');
+const {app, database} = require('./testDatabase');
 
-const database = require('../src/db');
+const expect = chai.expect;
+chai.use(chaiSubset);
 
 const headers = {'Content-Type': 'application/json'};
-const tasks = [
-  {name: 'task1', description: 'desc1'},
-  {name: 'task2', description: 'desc2'},
-  {name: 'task3', description: 'desc3'},
-];
-const invalidTasks = [
-  {name: null, description: 'desc1'},
-  {name: 'task1', description: null},
-  {name: null, description: null},
-  {name: 'a'.repeat(31), description: 'b'.repeat(121)},
-];
 
 describe('Application health', () => {
   it('should be healthy', async () => {
@@ -33,6 +22,10 @@ describe('Application health', () => {
 });
 
 describe('Tasks', () => {
+  before(async () => {
+    await database.migrate.latest();
+  });
+
   beforeEach(async () => {
     await database('tasks').select().del();
   });

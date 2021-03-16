@@ -3,4 +3,7 @@ const knex = require('knex');
 const config = require('../../knexfile')[NODE_ENV];
 const database = knex(config);
 
-module.exports = database;
+const makeTaskModel = require('./TaskModel');
+const TaskModel = makeTaskModel({database});
+
+module.exports = {TaskModel, makeTaskModel};

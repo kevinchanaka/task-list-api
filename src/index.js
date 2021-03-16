@@ -1,45 +1,43 @@
-#!/usr/bin/env node
-
 /**
  * Module dependencies.
  */
-const {PORT} = require('../src/config');
-const app = require('../src/app');
+const {PORT} = require('./config');
+const {app} = require('./app');
 const debug = require('debug')('api:server');
 const http = require('http');
 
 /**
- * Get port from environment and store in Express.
- */
+  * Get port from environment and store in Express.
+  */
 
 app.set('port', PORT);
 
 /**
- * Create HTTP server.
- */
+  * Create HTTP server.
+  */
 
 const server = http.createServer(app);
 
 /**
- * Listen on provided port, on all network interfaces.
- */
+  * Listen on provided port, on all network interfaces.
+  */
 
 server.listen(PORT);
 server.on('error', onError);
 server.on('listening', onListening);
 
 /**
- * Event listener for HTTP server "error" event.
- * @param {string} error error message
- */
+  * Event listener for HTTP server "error" event.
+  * @param {string} error error message
+  */
 function onError(error) {
   if (error.syscall !== 'listen') {
     throw error;
   }
 
   const bind = typeof port === 'string' ?
-    'Pipe ' + port :
-    'Port ' + port;
+     'Pipe ' + port :
+     'Port ' + port;
 
   // handle specific listen errors with friendly messages
   switch (error.code) {
@@ -57,12 +55,13 @@ function onError(error) {
 }
 
 /**
- * Event listener for HTTP server "listening" event.
- */
+  * Event listener for HTTP server "listening" event.
+  */
 function onListening() {
   const addr = server.address();
   const bind = typeof addr === 'string' ?
-    'pipe ' + addr :
-    'port ' + addr.port;
+     'pipe ' + addr :
+     'port ' + addr.port;
   debug('Listening on ' + bind);
 }
+
