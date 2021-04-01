@@ -17,7 +17,7 @@ function makeTaskService({TaskModel}) {
 
   async function createTask(data) {
     const task = makeTaskObj(data);
-    if (!task.error) {
+    if (task.error == null) {
       await TaskModel.insert(task.value);
     }
     return task;
@@ -27,20 +27,36 @@ function makeTaskService({TaskModel}) {
     return await TaskModel.findAll();
   }
 
+  // retrieves a specific task, returns undefined if task does not exist
   async function getTask(id) {
     return await TaskModel.findById(id);
   }
 
+  // deletes a task, returns undefined if task does not exists
+  // otherwise, returns ID of deleted task
   async function deleteTask(id) {
-    await TaskModel.remove(id);
+    let retVal;
+    const task = await getTask(id);
+    if (task != null) {
+      await TaskModel.remove(id);
+      retVal = id;
+    }
+    return retVal;
   }
 
+  // modifies task, returns full modified task if successful
+  // otherwise, returns undefined
   async function modifyTask(data) {
-    const task = makeTaskObj(data);
-    if (!task.error) {
-      await TaskModel.update(task.value);
+    let retVal;
+    const currentTask = await getTask(data.id);
+    if (currentTask != null) {
+      const updatedTask = makeTaskObj(data);
+      if (updatedTask.error == null) {
+        await TaskModel.update(updatedTask.value);
+        retVal = updatedTask;
+      }
     }
-    return task;
+    return retVal;
   }
 };
 

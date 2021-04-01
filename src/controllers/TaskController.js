@@ -31,7 +31,7 @@ function makeTaskController({TaskService}) {
   async function postTask(httpRequest) {
     let retVal;
     const createTask = await TaskService.createTask(httpRequest.body);
-    if (createTask.error) {
+    if (createTask.error != null) {
       retVal = {statusCode: 404, body: INVALID};
     } else {
       retVal = {statusCode: 200, body: createTask.value};
@@ -39,18 +39,24 @@ function makeTaskController({TaskService}) {
     return retVal;
   }
 
-  // TODO: make function return different message if task does not exist
   async function deleteTask(httpRequest) {
-    await TaskService.deleteTask(httpRequest.params.id);
-    return {statusCode: 200, body: DELETED};
+    let retVal;
+    const taskId = await TaskService.deleteTask(httpRequest.params.id);
+    if (taskId == null) {
+      retVal = {statusCode: 404, body: NOT_FOUND};
+    } else {
+      retVal = {statusCode: 200, body: DELETED};
+    }
+    return retVal;
   }
 
-  // TODO: make function return different message if task does not exist
   async function putTask(httpRequest) {
     let retVal;
     const modifyTask = await TaskService
         .modifyTask({id: httpRequest.params.id, ...httpRequest.body});
-    if (modifyTask.error) {
+    if (modifyTask == null) {
+      retVal = {statusCode: 404, body: NOT_FOUND};
+    } else if (modifyTask.error != null) {
       retVal = {statusCode: 404, body: INVALID};
     } else {
       retVal = {statusCode: 200, body: MODIFIED};
