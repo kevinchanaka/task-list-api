@@ -6,4 +6,4 @@ const database = knex(config);
 const makeTaskModel = require('./TaskModel');
 const TaskModel = makeTaskModel({database});
 
-module.exports = {TaskModel, makeTaskModel};
+module.exports = {database, TaskModel, makeTaskModel};

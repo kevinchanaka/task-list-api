@@ -1,11 +1,7 @@
-const chai = require('chai');
 const request = require('supertest');
-const chaiSubset = require('chai-subset');
 const {tasks, invalidTasks} = require('../data');
+const {expect} = require('..');
 const {app, database} = require('./testDatabase');
-
-const expect = chai.expect;
-chai.use(chaiSubset);
 
 const headers = {'Content-Type': 'application/json'};
 
