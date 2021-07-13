@@ -4,6 +4,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const makeRoutes = require('./routes');
+const {HEALTH_ENDPOINT, TASKS_ENDPOINT} = require('../config');
 
 function makeApp({TaskController}) {
   const app = express();
@@ -15,8 +16,8 @@ function makeApp({TaskController}) {
 
   // configuring routes
   const {TasksRouter, HealthRouter} = makeRoutes({TaskController});
-  app.use('/health', HealthRouter);
-  app.use('/tasks', TasksRouter);
+  app.use(HEALTH_ENDPOINT, HealthRouter);
+  app.use(TASKS_ENDPOINT, TasksRouter);
 
   // catch 404 and forward to error handler
   app.use(function(req, res, next) {
