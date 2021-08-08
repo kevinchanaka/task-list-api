@@ -1,3 +1,0 @@
-# Placeholder file, need to create CI/CD pipeline here 
-AWSTemplateFormatVersion: "2010-09-09"
-Description: Template to provision CI/CD pipeline for task list application

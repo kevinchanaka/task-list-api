@@ -1,12 +1,12 @@
 const {DB_NAME, DB_HOST, DB_PORT,
-  DB_USER, DB_PASSWORD} = require('./src/config');
+  DB_TEST_PORT, DB_USER, DB_PASSWORD} = require('./src/config');
 
 module.exports = {
   development: {
     client: 'mysql2',
     connection: {
-      host: '127.0.0.1',
-      port: 33061,
+      host: DB_HOST,
+      port: DB_PORT,
       user: DB_USER,
       password: DB_PASSWORD,
       database: DB_NAME,
@@ -16,8 +16,8 @@ module.exports = {
   test: {
     client: 'mysql2',
     connection: {
-      host: '127.0.0.1',
-      port: 33062,
+      host: DB_HOST,
+      port: DB_TEST_PORT,
       user: DB_USER,
       password: DB_PASSWORD,
       database: DB_NAME,

@@ -1,0 +1,6 @@
+.env
+test
+node_modules
+README.md
+deploy
+migrations
