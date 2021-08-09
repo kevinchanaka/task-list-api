@@ -1,0 +1,29 @@
+version: 0.2
+       
+phases:
+  install:
+    commands:
+      - echo "Installing npm packages"
+      - npm install
+  pre_build:
+    commands:
+      - echo "Running test cases"
+      - make
+      - npm test
+      - npm run -s integration
+  build:
+    commands:
+      - echo "Building docker image and pushing to ECR"
+      - aws ecr get-login-password --region ap-southeast-2 | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+      - make build
+      - docker tag task-list-api:latest ${ECR_REPOSITORY_URI}:${CODEBUILD_RESOLVED_SOURCE_VERSION}
+      - docker push ${ECR_REPOSITORY_URI}:${CODEBUILD_RESOLVED_SOURCE_VERSION}
+  post_build:
+    on-failure: CONTINUE
+    commands:
+      - echo "Cleaning up environment"
+      - make clean
+
+artifacts:
+  files:
+    - "*.yaml"

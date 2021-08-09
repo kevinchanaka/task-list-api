@@ -41,6 +41,14 @@ export class PipelineStack extends cdk.Stack {
               type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
               value: ecrRepository.repositoryUri,
             },
+            ECR_REGISTRY: {
+              type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
+              value: ecrRepository.repositoryUri.split('/')[0],
+            },
+            ECR_REPOSITORY: {
+              type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
+              value: ecrRepository.repositoryUri.split('/')[1],
+            },
           },
         });
 
