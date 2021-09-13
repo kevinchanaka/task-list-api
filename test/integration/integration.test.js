@@ -18,10 +18,6 @@ describe('Application health', () => {
 });
 
 describe('Tasks', () => {
-  before(async () => {
-    await database.migrate.latest();
-  });
-
   beforeEach(async () => {
     await database('tasks').select().del();
   });

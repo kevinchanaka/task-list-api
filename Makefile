@@ -9,7 +9,7 @@ app=task-list-api
 all : db
 
 .env:
-	./deploy/config/generateEnv.sh
+	./deploy/config/generate-env.sh
 
 db : .env
 	docker network create ${network}
@@ -30,8 +30,8 @@ db : .env
 	  -p 33062:3306 \
 	  mysql:8
 	sleep 60
-	knex --env development migrate:latest
-	knex --env test migrate:latest
+	npx knex --env development migrate:latest
+	npx knex --env test migrate:latest
 
 build :
 	docker build -t ${app} .
@@ -48,7 +48,7 @@ app : .env
 	  ${app}
 
 start :
-	-docker start ${db_dev} ${db_test} ${app}]
+	-docker start ${db_dev} ${db_test} ${app}
 
 stop :
 	-docker stop ${db_dev} ${db_test} ${app}
