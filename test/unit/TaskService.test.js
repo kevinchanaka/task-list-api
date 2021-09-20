@@ -1,10 +1,6 @@
-const {tasks, invalidTasks} = require('../data');
-const {expect} = require('..');
-const {makeTaskService} = require('../../src/services');
-const {makeMockModel} = require('./MockModel');
-
-const TaskModel = makeMockModel();
-const TaskService = makeTaskService({TaskModel});
+import {tasks, invalidTasks} from '../data';
+import {expect} from '../';
+import {TaskModel, TaskService} from './';
 
 describe('TaskService', () => {
   beforeEach(async () => {
@@ -23,7 +19,7 @@ describe('TaskService', () => {
   });
 
   it('lists tasks', async () => {
-    for (task of tasks) {
+    for (const task of tasks) {
       await TaskService.createTask(task);
     }
     const taskList = await TaskService.getTasks();
@@ -40,7 +36,7 @@ describe('TaskService', () => {
 
   it('deletes a task', async () => {
     const addedTasks = [];
-    for (task of tasks) {
+    for (const task of tasks) {
       const addTask = await TaskService.createTask(task);
       addedTasks.push(addTask.value);
     }

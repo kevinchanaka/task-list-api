@@ -1,6 +1,6 @@
 // Library to mock models for unit testing
 
-function makeMockModel() {
+export function makeMockModel() {
   let dataArray = [];
   return Object.freeze({
     insert,
@@ -40,5 +40,3 @@ function makeMockModel() {
     dataArray = [];
   }
 }
-
-module.exports = {makeMockModel};

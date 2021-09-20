@@ -1,6 +1,6 @@
 const taskTable = 'tasks';
 
-function makeTaskModel({database}) {
+export function makeTaskModel({database}) {
   return Object.freeze({
     insert,
     findAll,
@@ -36,5 +36,3 @@ function makeTaskModel({database}) {
     return (await database(taskTable).where({id: data.id}).update(data));
   }
 }
-
-module.exports = makeTaskModel;

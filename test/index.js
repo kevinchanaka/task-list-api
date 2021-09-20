@@ -1,8 +1,7 @@
 // setting up chai and other required libraries
+import chai from 'chai';
+import chaiSubset from 'chai-subset';
 
-const chai = require('chai');
-const expect = chai.expect;
-const chaiSubset = require('chai-subset');
 chai.use(chaiSubset);
+export const expect = chai.expect;
 
-module.exports = {expect};

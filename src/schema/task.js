@@ -1,8 +1,8 @@
-const {NAME_LENGTH, DESCRIPTION_LENGTH, UUID_LENGTH} = require('../config');
-const Joi = require('joi');
-const {v4: uuidv4} = require('uuid');
+import {NAME_LENGTH, DESCRIPTION_LENGTH, UUID_LENGTH} from '../config';
+import Joi from 'joi';
+import {v4 as uuidv4} from 'uuid';
 
-const task = Joi.object({
+export const taskSchema = Joi.object({
   id: Joi.string()
       .max(UUID_LENGTH)
       .default(() => uuidv4()),
@@ -13,5 +13,3 @@ const task = Joi.object({
       .required()
       .max(DESCRIPTION_LENGTH),
 });
-
-module.exports = task;

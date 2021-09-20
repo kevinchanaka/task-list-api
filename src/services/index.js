@@ -1,5 +1,5 @@
-const {TaskModel} = require('../db');
-const makeTaskService = require('./TaskService');
-const TaskService = makeTaskService({TaskModel});
+import {TaskModel} from '../db';
+import {makeTaskService} from './TaskService';
 
-module.exports = {TaskService, makeTaskService};
+export const TaskService = makeTaskService({TaskModel});
+export {makeTaskService};

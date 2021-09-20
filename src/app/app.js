@@ -1,12 +1,12 @@
-const createError = require('http-errors');
-const express = require('express');
-const cors = require('cors');
-const cookieParser = require('cookie-parser');
-const logger = require('morgan');
-const makeRoutes = require('./routes');
-const {HEALTH_ENDPOINT, TASKS_ENDPOINT} = require('../config');
+import createError from 'http-errors';
+import express from 'express';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import logger from 'morgan';
+import {makeRoutes} from './routes';
+import {HEALTH_ENDPOINT, TASKS_ENDPOINT} from '../config';
 
-function makeApp({TaskController}) {
+export function makeApp(controllers) {
   const app = express();
   app.use(cors()); // adding cors for testing only
   app.use(logger('dev'));
@@ -15,7 +15,7 @@ function makeApp({TaskController}) {
   app.use(cookieParser());
 
   // configuring routes
-  const {TasksRouter, HealthRouter} = makeRoutes({TaskController});
+  const {TasksRouter, HealthRouter} = makeRoutes(controllers);
   app.use(HEALTH_ENDPOINT, HealthRouter);
   app.use(TASKS_ENDPOINT, TasksRouter);
 
@@ -34,5 +34,3 @@ function makeApp({TaskController}) {
 
   return app;
 }
-
-module.exports = makeApp;

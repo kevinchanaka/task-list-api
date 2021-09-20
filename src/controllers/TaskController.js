@@ -3,7 +3,7 @@ const INVALID = {message: 'Invalid task'};
 const DELETED = {message: 'Task deleted'};
 const MODIFIED = {message: 'Task modified'};
 
-function makeTaskController({TaskService}) {
+export function makeTaskController({TaskService}) {
   return Object.freeze({
     getTasks,
     getTask,
@@ -64,5 +64,3 @@ function makeTaskController({TaskService}) {
     return retVal;
   }
 }
-
-module.exports = makeTaskController;

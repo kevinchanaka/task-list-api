@@ -1,6 +1,5 @@
-const {TaskController} = require('../controllers');
-const makeApp = require('./app');
+import {TaskController} from '../controllers';
+import {makeApp} from './app';
 
-const app = makeApp({TaskController});
-
-module.exports = {app, makeApp};
+export const app = makeApp({TaskController});
+export {makeApp};

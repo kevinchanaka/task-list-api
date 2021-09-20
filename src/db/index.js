@@ -1,9 +1,10 @@
-const {NODE_ENV} = require('../config');
-const knex = require('knex');
-const config = require('../../knexfile')[NODE_ENV];
-const database = knex(config);
+import {NODE_ENV} from '../config';
+import knex from 'knex';
+import {knexConfig} from '../../knexfile';
+import {makeTaskModel} from './TaskModel';
 
-const makeTaskModel = require('./TaskModel');
-const TaskModel = makeTaskModel({database});
+const config = knexConfig[NODE_ENV];
+export const database = knex(config);
 
-module.exports = {database, TaskModel, makeTaskModel};
+export const TaskModel = makeTaskModel({database});
+export {makeTaskModel};

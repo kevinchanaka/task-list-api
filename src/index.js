@@ -1,10 +1,12 @@
 /**
  * Module dependencies.
  */
-const {PORT} = require('./config');
-const {app} = require('./app');
-const debug = require('debug')('api:server');
-const http = require('http');
+import {PORT} from './config/index.js';
+import {app} from './app';
+import debugLib from 'debug';
+import http from 'http';
+
+const debug = debugLib('api:server');
 
 /**
   * Get port from environment and store in Express.

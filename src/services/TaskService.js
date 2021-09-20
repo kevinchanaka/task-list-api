@@ -1,6 +1,6 @@
-const taskSchema = require('../schema/task');
+import {taskSchema} from '../schema/task';
 
-function makeTaskService({TaskModel}) {
+export function makeTaskService({TaskModel}) {
   return Object.freeze({
     createTask,
     getTasks,
@@ -59,6 +59,3 @@ function makeTaskService({TaskModel}) {
     return retVal;
   }
 };
-
-module.exports = makeTaskService;
-

@@ -1,6 +1,5 @@
-const makeTaskController = require('./TaskController');
-const {TaskService} = require('../services');
+import {makeTaskController} from './TaskController';
+import {TaskService} from '../services';
 
-const TaskController = makeTaskController({TaskService});
-
-module.exports = {TaskController, makeTaskController};
+export const TaskController = makeTaskController({TaskService});
+export {makeTaskController};

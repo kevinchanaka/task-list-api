@@ -1,9 +1,39 @@
-const express = require('express');
-const expressCallback = require('../helpers/express-callback');
+import {Router} from 'express';
 
-function makeRoutes({TaskController}) {
-  const TasksRouter = new express.Router();
-  const HealthRouter = new express.Router();
+function expressCallback(controller) {
+  return async (req, res) => {
+    const httpRequest = {
+      body: req.body,
+      query: req.query,
+      params: req.params,
+      ip: req.ip,
+      method: req.method,
+      path: req.path,
+      headers: {
+        'Content-Type': req.get('Content-Type'),
+        'Referer': req.get('referer'),
+        'User-Agent': req.get('User-Agent'),
+      },
+    };
+    try {
+      const httpResponse = await controller(httpRequest);
+      if (httpResponse.headers) {
+        res.set(httpResponse.headers);
+      }
+      res.type('json');
+      res.status(httpResponse.statusCode).send(httpResponse.body);
+    } catch (error) {
+      console.log(error);
+      res.status(500).send({message: 'An unknown error occured'});
+    }
+  };
+};
+
+export function makeRoutes(controllers) {
+  const TasksRouter = new Router();
+  const HealthRouter = new Router();
+
+  const TaskController = controllers.TaskController;
 
   TasksRouter.get('/', expressCallback(TaskController.getTasks));
   TasksRouter.get('/:id', expressCallback(TaskController.getTask));
@@ -17,5 +47,3 @@ function makeRoutes({TaskController}) {
 
   return {TasksRouter, HealthRouter};
 }
-
-module.exports = makeRoutes;

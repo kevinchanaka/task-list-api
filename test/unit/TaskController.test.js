@@ -1,12 +1,6 @@
-const {tasks, invalidTasks} = require('../data');
-const {expect} = require('..');
-const {makeTaskService} = require('../../src/services');
-const {makeMockModel} = require('./MockModel');
-const {makeTaskController} = require('../../src/controllers');
-
-const TaskModel = makeMockModel();
-const TaskService = makeTaskService({TaskModel});
-const TaskController = makeTaskController({TaskService});
+import {tasks, invalidTasks} from '../data';
+import {expect} from '../';
+import {TaskModel, TaskController} from './';
 
 describe('TaskController', () => {
   beforeEach(async () => {

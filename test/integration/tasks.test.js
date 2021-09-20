@@ -1,21 +1,10 @@
-const request = require('supertest');
-const {tasks, invalidTasks} = require('../data');
-const {expect} = require('..');
-const {app, database} = require('./testDatabase');
-const {HEALTH_ENDPOINT, TASKS_ENDPOINT} = require('../../src/config');
+import request from 'supertest';
+import {tasks, invalidTasks} from '../data';
+import {expect} from '../';
+import {app, database} from './';
+import {TASKS_ENDPOINT} from '../../src/config';
+
 const headers = {'Content-Type': 'application/json'};
-
-describe('Application health', () => {
-  it('should be healthy', async () => {
-    const res = await request(app).get(HEALTH_ENDPOINT);
-    expect(res.status).to.equal(200);
-  });
-
-  it('should return 404 on invalid path', async () => {
-    const res = await request(app).get('/foobar');
-    expect(res.status).to.equal(404);
-  });
-});
 
 describe('Tasks', () => {
   beforeEach(async () => {
@@ -35,7 +24,7 @@ describe('Tasks', () => {
     });
 
     it('should not be able to add invalid tasks', async () => {
-      for (task of invalidTasks) {
+      for (const task of invalidTasks) {
         const res = await request(app).post(TASKS_ENDPOINT)
             .set(headers).send(task);
         expect(res.status).to.equal(404);
@@ -45,7 +34,7 @@ describe('Tasks', () => {
 
   describe('GET tasks', () => {
     it('should return all tasks', async () => {
-      for (task of tasks) {
+      for (const task of tasks) {
         await request(app).post(TASKS_ENDPOINT).set(headers).send(task);
       }
       const res = await request(app).get(TASKS_ENDPOINT);
@@ -55,10 +44,10 @@ describe('Tasks', () => {
 
     it('should return specific task if it exists', async () => {
       const taskId = (await request(app).post(TASKS_ENDPOINT).set(headers)
-          .send(task)).body.id;
+          .send(tasks[0])).body.id;
       const getTask = await request(app).get(`${TASKS_ENDPOINT}/${taskId}`);
       expect(getTask.status).to.equal(200);
-      expect(getTask.body).to.containSubset(task);
+      expect(getTask.body).to.containSubset(tasks[0]);
     });
 
     it('should return 404 for non-existent task or invalid id', async () => {
@@ -84,7 +73,7 @@ describe('Tasks', () => {
     it('should not be able to make a task invalid', async () => {
       const taskId = (await request(app).post(TASKS_ENDPOINT).set(headers)
           .send(tasks[0])).body.id;
-      for (task of invalidTasks) {
+      for (const task of invalidTasks) {
         const modifyTask = await request(app).put(`${TASKS_ENDPOINT}/${taskId}`)
             .set(headers).send(task);
         const getTask = await request(app).get(`${TASKS_ENDPOINT}/${taskId}`);
@@ -105,4 +94,3 @@ describe('Tasks', () => {
     });
   });
 });
-
