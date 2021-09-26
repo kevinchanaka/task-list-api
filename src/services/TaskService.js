@@ -1,4 +1,4 @@
-import {taskSchema} from '../schema/task';
+import {v4 as uuidv4} from 'uuid';
 
 export function makeTaskService({TaskModel}) {
   return Object.freeze({
@@ -10,16 +10,17 @@ export function makeTaskService({TaskModel}) {
   });
 
   function makeTaskObj(data) {
-    const {error, value} = taskSchema.validate(data);
-    // If error is undefined, task is invalid
-    return {error: error, value: value};
+    const task = {
+      id: uuidv4(),
+      name: data.name,
+      description: data.description,
+    };
+    return task;
   }
 
   async function createTask(data) {
     const task = makeTaskObj(data);
-    if (task.error == null) {
-      await TaskModel.insert(task.value);
-    }
+    await TaskModel.insert(task);
     return task;
   }
 
@@ -32,7 +33,7 @@ export function makeTaskService({TaskModel}) {
     return await TaskModel.findById(id);
   }
 
-  // deletes a task, returns undefined if task does not exists
+  // deletes a task, returns undefined if task does not exist
   // otherwise, returns ID of deleted task
   async function deleteTask(id) {
     let retVal;
@@ -44,17 +45,14 @@ export function makeTaskService({TaskModel}) {
     return retVal;
   }
 
-  // modifies task, returns full modified task if successful
+  // modifies task, returns modified task if successful
   // otherwise, returns undefined
   async function modifyTask(data) {
     let retVal;
     const currentTask = await getTask(data.id);
     if (currentTask != null) {
-      const updatedTask = makeTaskObj(data);
-      if (updatedTask.error == null) {
-        await TaskModel.update(updatedTask.value);
-        retVal = updatedTask;
-      }
+      await TaskModel.update(data);
+      retVal = data;
     }
     return retVal;
   }
