@@ -1,9 +1,8 @@
-import {Router} from 'express';
-
-function expressCallback(controller) {
+export function expressCallback(controller) {
   return async (req, res) => {
     const httpRequest = {
       body: req.body,
+      user: req.user,
       query: req.query,
       params: req.params,
       ip: req.ip,
@@ -28,22 +27,3 @@ function expressCallback(controller) {
     }
   };
 };
-
-export function makeRoutes(controllers) {
-  const TasksRouter = new Router();
-  const HealthRouter = new Router();
-
-  const TaskController = controllers.TaskController;
-
-  TasksRouter.get('/', expressCallback(TaskController.getTasks));
-  TasksRouter.get('/:id', expressCallback(TaskController.getTask));
-  TasksRouter.post('/', expressCallback(TaskController.postTask));
-  TasksRouter.delete('/:id', expressCallback(TaskController.deleteTask));
-  TasksRouter.put('/:id', expressCallback(TaskController.putTask));
-
-  HealthRouter.get('/', (req, res) => {
-    res.json({message: 'API is running'});
-  });
-
-  return {TasksRouter, HealthRouter};
-}

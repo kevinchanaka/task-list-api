@@ -1,7 +1,7 @@
 import {DB_NAME, DB_HOST, DB_PORT,
   DB_TEST_PORT, DB_USER, DB_PASSWORD} from './src/config';
 
-export const knexConfig = {
+const knexConfig = {
   development: {
     client: 'mysql2',
     connection: {
@@ -35,3 +35,5 @@ export const knexConfig = {
     },
   },
 };
+
+export default knexConfig;
