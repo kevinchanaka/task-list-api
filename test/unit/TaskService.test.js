@@ -1,18 +1,17 @@
-import {tasks} from '../data';
+import {tasks, userId} from '../data';
 import {expect} from '../';
 import {TaskModel, TaskService} from './';
 
 describe('TaskService', () => {
-  beforeEach(async () => {
+  afterEach(async () => {
     await TaskModel.destroy();
   });
 
   it('lists tasks', async () => {
     for (const task of tasks) {
-      await TaskService.createTask(task);
+      await TaskService.createTask(userId, task);
     }
-    const taskList = await TaskService.getTasks();
-    expect(taskList).to.be.a('array');
+    const taskList = await TaskService.getTasks(userId);
     expect(taskList.length).to.equal(tasks.length);
     expect(taskList[0]).to.containSubset(tasks[0]);
   });
@@ -24,29 +23,25 @@ describe('TaskService', () => {
   });
 
   it('deletes a task', async () => {
-    const addedTasks = [];
-    for (const task of tasks) {
-      const addTask = await TaskService.createTask(task);
-      addedTasks.push(addTask);
-    }
-    const deletedTask = await TaskService.deleteTask(addedTasks[1].id);
-    const getTask = await TaskService.getTask(addedTasks[1].id);
+    const task = await TaskService.createTask(userId, tasks[0]);
+    const deletedTask = await TaskService.deleteTask(userId, task.id);
+    const getTask = await TaskService.getTask(userId, task.id);
+    expect(deletedTask).to.equal(task.id);
     expect(getTask).to.be.an('undefined');
-    expect(deletedTask).to.equal(addedTasks[1].id);
   });
 
   it('modifies an existing task', async () => {
-    const task = await TaskService.createTask(tasks[0]);
+    const task = await TaskService.createTask(userId, tasks[0]);
     const modifiedTask = await TaskService
-        .modifyTask({id: task.id, ...tasks[1]});
-    const getTask = await TaskService.getTask(task.id);
+        .modifyTask(userId, task.id, {...tasks[1]});
+    const getTask = await TaskService.getTask(userId, task.id);
     expect(getTask).to.containSubset(modifiedTask);
   });
 
   it('unable to delete or modify task that does not exist', async () => {
-    const task1 = await TaskService.deleteTask('foobar');
+    const task1 = await TaskService.deleteTask(userId, 'foobar');
     expect(task1).to.be.an('undefined');
-    const task2 = await TaskService.modifyTask(tasks[0]);
+    const task2 = await TaskService.modifyTask(userId, tasks[0]);
     expect(task2).to.be.an('undefined');
   });
 });

@@ -30,8 +30,8 @@ db : .env
 	  -p 33062:3306 \
 	  mysql:8
 	sleep 60
-	npx knex --env development migrate:latest
-	npx knex --env test migrate:latest
+	npx knex --esm --env development migrate:latest
+	npx knex --esm --env test migrate:latest
 
 build :
 	docker build -t ${app} .

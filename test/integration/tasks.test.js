@@ -1,32 +1,57 @@
-import request from 'supertest';
-import {tasks, invalidTasks} from '../data';
+import {tasks, invalidTasks, users} from '../data';
 import {expect} from '../';
-import {app, database} from './';
+import {request, cleanDatabaseTable, setupUser} from './';
 import {TASKS_ENDPOINT} from '../../src/config';
 
-const headers = {'Content-Type': 'application/json'};
+let userTokenHeader;
+
+// should create taskAPI and userAPI class
+async function addTask(userTokenHeader, task) {
+  return await request.post(TASKS_ENDPOINT).set(userTokenHeader)
+      .send(task);
+}
+
+async function getTasks(userTokenHeader) {
+  return await request.get(TASKS_ENDPOINT).set(userTokenHeader);
+}
+
+async function getTask(userTokenHeader, taskId) {
+  return await request.get(`${TASKS_ENDPOINT}/${taskId}`).set(userTokenHeader);
+}
+
+async function modifyTask(userTokenHeader, taskId, task) {
+  return await request.put(`${TASKS_ENDPOINT}/${taskId}`).set(userTokenHeader)
+      .send(task);
+}
+
+async function deleteTask(userTokenHeader, taskId) {
+  return await request.delete(`${TASKS_ENDPOINT}/${taskId}`)
+      .set(userTokenHeader);
+}
+
 
 describe('Tasks', () => {
-  beforeEach(async () => {
-    await database('tasks').select().del();
+  afterEach(async () => {
+    await cleanDatabaseTable('tasks');
+  });
+
+  before(async () => {
+    userTokenHeader = await setupUser(users[0]);
   });
 
   after(async () => {
-    await database.destroy();
+    await cleanDatabaseTable('users');
   });
 
   describe('POST tasks', () => {
     it('should be able to add a task', async () => {
-      const res = await request(app).post(TASKS_ENDPOINT)
-          .set(headers).send(tasks[0]);
+      const res = await addTask(userTokenHeader, tasks[0]);
       expect(res.status).to.equal(200);
-      expect(res.body).to.have.property('id');
     });
 
     it('should not be able to add invalid tasks', async () => {
       for (const task of invalidTasks) {
-        const res = await request(app).post(TASKS_ENDPOINT)
-            .set(headers).send(task);
+        const res = await addTask(userTokenHeader, task);
         expect(res.status).to.equal(404);
       }
     });
@@ -35,62 +60,56 @@ describe('Tasks', () => {
   describe('GET tasks', () => {
     it('should return all tasks', async () => {
       for (const task of tasks) {
-        await request(app).post(TASKS_ENDPOINT).set(headers).send(task);
+        await addTask(userTokenHeader, task);
       }
-      const res = await request(app).get(TASKS_ENDPOINT);
+      const res = await getTasks(userTokenHeader);
       expect(res.status).to.equal(200);
-      expect(res.body).to.have.lengthOf(tasks.length);
+      expect(res.body.tasks).to.have.lengthOf(tasks.length);
     });
 
     it('should return specific task if it exists', async () => {
-      const taskId = (await request(app).post(TASKS_ENDPOINT).set(headers)
-          .send(tasks[0])).body.id;
-      const getTask = await request(app).get(`${TASKS_ENDPOINT}/${taskId}`);
-      expect(getTask.status).to.equal(200);
-      expect(getTask.body).to.containSubset(tasks[0]);
+      const taskId = (await addTask(userTokenHeader, tasks[0])).body.task.id;
+      const res = await getTask(userTokenHeader, taskId);
+      expect(res.status).to.equal(200);
+      expect(res.body.task).to.containSubset(tasks[0]);
     });
 
     it('should return 404 for non-existent task or invalid id', async () => {
-      let taskNotExist = await request(app).get(`${TASKS_ENDPOINT}/1`);
-      expect(taskNotExist.status).to.equal(404);
-      taskNotExist = await request(app).get(`${TASKS_ENDPOINT}/foobar`);
-      expect(taskNotExist.status).to.equal(404);
+      const res1 = await getTask(userTokenHeader, '1');
+      expect(res1.status).to.equal(404);
+      const res2 = await getTask(userTokenHeader, 'foobar');
+      expect(res2.status).to.equal(404);
     });
   });
 
   describe('PUT tasks', () => {
     it('should be able to modify an existing task', async () => {
-      const taskId = (await request(app).post(TASKS_ENDPOINT).set(headers)
-          .send(tasks[0])).body.id;
+      const taskId = (await addTask(userTokenHeader, tasks[0])).body.task.id;
       const modifiedTask = tasks[1];
-      const modifyTask = await request(app).put(`${TASKS_ENDPOINT}/${taskId}`)
-          .set(headers).send(modifiedTask);
-      expect(modifyTask.status).to.equal(200);
-      const getTask = await request(app).get(`${TASKS_ENDPOINT}/${taskId}`);
-      expect(getTask.body).to.containSubset(modifiedTask);
+      const res1 = await modifyTask(userTokenHeader, taskId, modifiedTask);
+      expect(res1.status).to.equal(200);
+      const res2 = await getTask(userTokenHeader, taskId);
+      expect(res2.body.task).to.containSubset(modifiedTask);
     });
 
     it('should not be able to make a task invalid', async () => {
-      const taskId = (await request(app).post(TASKS_ENDPOINT).set(headers)
-          .send(tasks[0])).body.id;
+      const taskId = (await addTask(userTokenHeader, tasks[0])).body.task.id;
       for (const task of invalidTasks) {
-        const modifyTask = await request(app).put(`${TASKS_ENDPOINT}/${taskId}`)
-            .set(headers).send(task);
-        const getTask = await request(app).get(`${TASKS_ENDPOINT}/${taskId}`);
-        expect(modifyTask.status).to.equal(404);
-        expect(getTask.body).to.containSubset(tasks[0]);
+        const res1 = await modifyTask(userTokenHeader, taskId, task);
+        const res2 = await getTask(userTokenHeader, taskId);
+        expect(res1.status).to.equal(404);
+        expect(res2.body.task).to.containSubset(tasks[0]);
       }
     });
   });
 
   describe('DELETE /tasks', () => {
     it('should be able to delete a task', async () => {
-      const taskId = (await request(app).post(TASKS_ENDPOINT).set(headers)
-          .send(tasks[0])).body.id;
-      const delTask = await request(app).delete(`${TASKS_ENDPOINT}/${taskId}`);
-      expect(delTask.status).to.equal(200);
-      const getTask = await request(app).get(`${TASKS_ENDPOINT}/${taskId}`);
-      expect(getTask.status).to.equal(404);
+      const taskId = (await addTask(userTokenHeader, tasks[0])).body.task.id;
+      const res1 = await deleteTask(userTokenHeader, taskId);
+      expect(res1.status).to.equal(200);
+      const res2 = await getTask(userTokenHeader, taskId);
+      expect(res2.status).to.equal(404);
     });
   });
 });

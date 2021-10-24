@@ -2,7 +2,6 @@ import {taskSchema} from '../validations/task';
 const NOT_FOUND = {message: 'Task not found'};
 const INVALID = {message: 'Invalid task'};
 const DELETED = {message: 'Task deleted'};
-const MODIFIED = {message: 'Task modified'};
 
 export function makeTaskController({TaskService}) {
   return Object.freeze({
@@ -13,37 +12,39 @@ export function makeTaskController({TaskService}) {
     putTask,
   });
 
-  async function getTasks() {
-    const tasks = await TaskService.getTasks();
-    return {statusCode: 200, body: tasks};
+  async function getTasks(request) {
+    const tasks = await TaskService.getTasks(request.user.id);
+    return {statusCode: 200, body: {tasks: tasks}};
   }
 
-  async function getTask(httpRequest) {
+  async function getTask(request) {
     let retVal;
-    const task = await TaskService.getTask(httpRequest.params.id);
+    const task = await TaskService.getTask(request.user.id, request.params.id);
     if (task) {
-      retVal = {statusCode: 200, body: task};
+      retVal = {statusCode: 200, body: {task: task}};
     } else {
       retVal = {statusCode: 404, body: NOT_FOUND};
     }
     return retVal;
   }
 
-  async function postTask(httpRequest) {
+  async function postTask(request) {
     let retVal;
-    const {error} = taskSchema.validate(httpRequest.body);
+    const {error} = taskSchema.validate(request.body);
     if (error) {
       retVal = {statusCode: 404, body: INVALID};
     } else {
-      const task = await TaskService.createTask(httpRequest.body);
-      retVal = {statusCode: 200, body: task};
+      const task = await TaskService.createTask(request.user.id,
+          request.body);
+      retVal = {statusCode: 200, body: {task: task}};
     }
     return retVal;
   }
 
-  async function deleteTask(httpRequest) {
+  async function deleteTask(request) {
     let retVal;
-    const taskId = await TaskService.deleteTask(httpRequest.params.id);
+    const taskId = await TaskService.deleteTask(request.user.id,
+        request.params.id);
     if (taskId) {
       retVal = {statusCode: 200, body: DELETED};
     } else {
@@ -52,18 +53,18 @@ export function makeTaskController({TaskService}) {
     return retVal;
   }
 
-  async function putTask(httpRequest) {
+  async function putTask(request) {
     let retVal;
-    const {error} = taskSchema.validate(httpRequest.body);
+    const {error} = taskSchema.validate(request.body);
     if (error) {
       retVal = {statusCode: 404, body: INVALID};
     } else {
-      const modifyTask = await TaskService.modifyTask({
-        id: httpRequest.params.id,
-        ...httpRequest.body,
-      });
+      const modifyTask = await TaskService.modifyTask(request.user.id,
+          request.params.id,
+          {...request.body},
+      );
       if (modifyTask) {
-        retVal = {statusCode: 200, body: MODIFIED};
+        retVal = {statusCode: 200, body: {task: modifyTask}};
       } else {
         retVal = {statusCode: 404, body: NOT_FOUND};
       }

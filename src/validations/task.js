@@ -1,4 +1,4 @@
-import {NAME_LENGTH, DESCRIPTION_LENGTH} from '../config';
+import {NAME_LENGTH, DEFAULT_LENGTH} from '../config';
 import Joi from 'joi';
 
 export const taskSchema = Joi.object({
@@ -7,5 +7,5 @@ export const taskSchema = Joi.object({
       .max(NAME_LENGTH),
   description: Joi.string()
       .required()
-      .max(DESCRIPTION_LENGTH),
+      .max(DEFAULT_LENGTH),
 });
