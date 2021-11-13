@@ -16,5 +16,5 @@ export async function authenticateToken(req, res, next) {
       return;
     }
   }
-  res.status(403).json(INVALID_TOKEN);
+  res.status(401).json(INVALID_TOKEN);
 }

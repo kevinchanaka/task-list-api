@@ -18,11 +18,12 @@ export async function cleanDatabaseTable(table) {
 // sets up users to test protected API endpoints
 export async function setupUser(user) {
   await request.post(`${USERS_ENDPOINT}/register`).send(user);
-  const res1 = await request.post(`${USERS_ENDPOINT}/login`).send({
+  const res = await request.post(`${USERS_ENDPOINT}/login`).send({
     email: user.email,
     password: user.password,
   });
-  return {'Authorization': 'Bearer ' + res1.body.accessToken};
+  request.set({'Authorization': 'Bearer ' + res.body.user.accessToken});
+  return {};
 }
 
 // destroy database connection (need to run this after test cases)

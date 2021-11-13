@@ -25,9 +25,9 @@ export function makeUserController({UserService, TokenService}) {
     } else {
       const user = await UserService.createUser(httpRequest.body);
       if (user) {
-        retVal = {statusCode: 200, body: user};
+        retVal = {statusCode: 200, body: {user: user}};
       } else {
-        retVal = {statusCode: 404, body: ALREADY_EXISTS};
+        retVal = {statusCode: 400, body: ALREADY_EXISTS};
       }
     }
     return retVal;
@@ -47,10 +47,11 @@ export function makeUserController({UserService, TokenService}) {
       const accessToken = TokenService.generateAccessToken(validUser.id);
       const refreshToken = await TokenService.
           generateRefreshToken(validUser.id);
-      return {statusCode: 200, body: {
+      return {statusCode: 200, body: {user: {
+        ...validUser,
         accessToken: accessToken,
         refreshToken: refreshToken,
-      }};
+      }}};
     }
     return {statusCode: 401, body: INCORRECT_CREDS};
   }
@@ -60,8 +61,9 @@ export function makeUserController({UserService, TokenService}) {
     if (refreshToken) {
       const validToken = await TokenService.verifyRefreshToken(refreshToken);
       if (validToken) {
-        const accessToken = TokenService.generateAccessToken(validToken.userId);
-        return {statusCode: 200, body: {accessToken: accessToken}};
+        const accessToken = TokenService.
+            generateAccessToken(validToken.data.userId);
+        return {statusCode: 200, body: {user: {accessToken: accessToken}}};
       }
     }
     return {statusCode: 401, body: INVALID_TOKEN};
