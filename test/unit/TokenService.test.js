@@ -13,15 +13,15 @@ describe('TokenService', () => {
   });
 
   it('generates valid refresh token', async () => {
-    const token = await TokenService.generateRefreshToken(userId);
-    expect(await TokenService.verifyRefreshToken(token))
+    const {refreshToken} = await TokenService.generateRefreshToken(userId);
+    expect(await TokenService.verifyRefreshToken(refreshToken))
         .to.not.equal(undefined);
   });
 
   it('deletes refresh token', async () => {
-    const token = await TokenService.generateRefreshToken(userId);
-    await TokenService.deleteRefreshToken(token);
-    expect(await TokenModel.findAllByField({token: token})).to.be.empty;
+    const {refreshToken} = await TokenService.generateRefreshToken(userId);
+    await TokenService.deleteRefreshToken(refreshToken);
+    expect(await TokenModel.findAllByField({token: refreshToken})).to.be.empty;
   });
 });
 

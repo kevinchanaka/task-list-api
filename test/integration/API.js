@@ -47,14 +47,14 @@ function makeUserAPI() {
     return await request.post(`${USERS_ENDPOINT}/login`).send(creds);
   }
 
-  async function getToken(refreshToken) {
+  async function getToken(cookie) {
     return await request.post(`${USERS_ENDPOINT}/token`)
-        .send({token: refreshToken});
+        .set({'Cookie': cookie});
   }
 
-  async function logoutUser(refreshToken) {
+  async function logoutUser(cookie) {
     return await request.post(`${USERS_ENDPOINT}/logout`)
-        .send({token: refreshToken});
+        .set({'Cookie': cookie});
   }
 }
 

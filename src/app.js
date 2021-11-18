@@ -1,6 +1,5 @@
 import createError from 'http-errors';
 import express from 'express';
-import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import {HEALTH_ENDPOINT, TASKS_ENDPOINT,
@@ -8,7 +7,7 @@ import {HEALTH_ENDPOINT, TASKS_ENDPOINT,
 import {HealthRouter, TasksRouter, UsersRouter} from './routes';
 
 export const app = express();
-app.use(cors()); // adding cors for testing only
+
 app.use(logger(LOG_TYPE));
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));

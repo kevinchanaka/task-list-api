@@ -32,7 +32,10 @@ export function makeTokenService({TokenModel}) {
       token: token,
       expiry: expiry,
     });
-    return token;
+    return {
+      refreshToken: token,
+      expiry: expiry,
+    };
   }
 
   async function deleteRefreshToken(token) {

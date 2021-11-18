@@ -23,7 +23,6 @@ export async function setupUser(user) {
     password: user.password,
   });
   request.set({'Authorization': 'Bearer ' + res.body.user.accessToken});
-  return {};
 }
 
 // destroy database connection (need to run this after test cases)

@@ -13,11 +13,20 @@ export function expressCallback(controller) {
         'Referer': req.get('referer'),
         'User-Agent': req.get('User-Agent'),
       },
+      cookies: req.cookies,
     };
     try {
       const httpResponse = await controller(httpRequest);
       if (httpResponse.headers) {
         res.set(httpResponse.headers);
+      }
+      if (httpResponse.cookie) {
+        res.cookie(httpResponse.cookie.name, httpResponse.cookie.value,
+            httpResponse.cookie.options);
+      }
+      if (httpResponse.clearCookie) {
+        res.clearCookie(httpResponse.clearCookie.name,
+            httpResponse.clearCookie.options);
       }
       res.type('json');
       res.status(httpResponse.statusCode).send(httpResponse.body);

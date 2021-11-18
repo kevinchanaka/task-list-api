@@ -9,24 +9,23 @@ describe('Users', () => {
   });
 
   it('Registers a new user', async () => {
-    const response = await UserAPI.registerUser(users[0]);
-    expect(response.statusCode).to.equal(200);
+    const res = await UserAPI.registerUser(users[0]);
+    expect(res.statusCode).to.equal(200);
   });
 
   it('Cannot register invalid user', async () => {
-    const response = await UserAPI.registerUser(invalidUsers[0]);
-    expect(response.statusCode).to.equal(400);
+    const res = await UserAPI.registerUser(invalidUsers[0]);
+    expect(res.statusCode).to.equal(400);
   });
 
   it('Can login to a specific user', async () => {
     await UserAPI.registerUser(users[0]);
-    const login = await UserAPI.loginUser({
+    const res = await UserAPI.loginUser({
       email: users[0].email,
       password: users[0].password,
     });
-    expect(login.statusCode).to.equal(200);
-    expect(login.body.user).to.have.property('accessToken');
-    expect(login.body.user).to.have.property('refreshToken');
+    expect(res.statusCode).to.equal(200);
+    expect(res.body.user).to.have.property('accessToken');
   });
 
   it('Cannot login with invalid credentials', async () => {
@@ -35,8 +34,8 @@ describe('Users', () => {
       email: users[0].email,
       password: users[1].password,
     };
-    const login = await UserAPI.loginUser(invalidCreds);
-    expect(login.statusCode).to.equal(401);
+    const res = await UserAPI.loginUser(invalidCreds);
+    expect(res.statusCode).to.equal(401);
   });
 
   it('Can fetch new access token for user', async () => {
@@ -45,9 +44,9 @@ describe('Users', () => {
       email: users[0].email,
       password: users[0].password,
     });
-    const newAccessToken = await UserAPI.getToken(login.body.user.refreshToken);
-    expect(newAccessToken.statusCode).to.equal(200);
-    expect(newAccessToken.body.user).to.have.property('accessToken');
+    const res = await UserAPI.getToken(login.headers['set-cookie'][0]);
+    expect(res.statusCode).to.equal(200);
+    expect(res.body.user).to.have.property('accessToken');
   });
 
   it('Can logout user and invalidate token', async () => {
@@ -56,10 +55,10 @@ describe('Users', () => {
       email: users[0].email,
       password: users[0].password,
     });
-    const logout = await UserAPI.logoutUser(login.body.user.refreshToken);
-    const oldRefreshTokenTest = await UserAPI
-        .getToken(login.body.user.refreshToken);
+    const cookie = login.headers['set-cookie'][0];
+    const logout = await UserAPI.logoutUser(cookie);
+    const res = await UserAPI.getToken(cookie);
     expect(logout.statusCode).to.equal(200);
-    expect(oldRefreshTokenTest.statusCode).to.equal(401);
+    expect(res.statusCode).to.equal(401);
   });
 });

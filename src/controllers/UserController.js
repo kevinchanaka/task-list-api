@@ -7,7 +7,6 @@ const LOGOUT_SUCCESS = {message: 'Logout successful'};
 // TODO: Feel like there is too much business logic here
 // would rather move this logic to another service if possible (AuthService)
 // TODO: move data validation to middleware
-// TODO: return refresh token in the form of a cookie
 
 export function makeUserController({UserService, TokenService}) {
   return Object.freeze({
@@ -45,19 +44,31 @@ export function makeUserController({UserService, TokenService}) {
     if (validUser) {
       // valid user, generate and return token
       const accessToken = TokenService.generateAccessToken(validUser.id);
-      const refreshToken = await TokenService.
+      const {refreshToken, expiry} = await TokenService.
           generateRefreshToken(validUser.id);
-      return {statusCode: 200, body: {user: {
-        ...validUser,
-        accessToken: accessToken,
-        refreshToken: refreshToken,
-      }}};
+      return {
+        statusCode: 200,
+        body: {
+          user: {
+            ...validUser,
+            accessToken: accessToken,
+          },
+        },
+        cookie: {
+          name: 'token',
+          value: refreshToken,
+          options: {
+            httpOnly: true,
+            expires: new Date(expiry * 1000),
+          },
+        },
+      };
     }
     return {statusCode: 401, body: INCORRECT_CREDS};
   }
 
   async function getAccessToken(httpRequest) {
-    const refreshToken = httpRequest.body.token;
+    const refreshToken = httpRequest.cookies.token;
     if (refreshToken) {
       const validToken = await TokenService.verifyRefreshToken(refreshToken);
       if (validToken) {
@@ -70,12 +81,21 @@ export function makeUserController({UserService, TokenService}) {
   }
 
   async function logoutUser(httpRequest) {
-    let retVal = {statusCode: 401, body: INVALID_TOKEN};
-    const refreshToken = httpRequest.body.token;
+    let retVal = {statusCode: 200, body: LOGOUT_SUCCESS};
+    const refreshToken = httpRequest.cookies.token;
     if (refreshToken) {
       const deleted = await TokenService.deleteRefreshToken(refreshToken);
       if (deleted) {
-        retVal = {statusCode: 200, body: LOGOUT_SUCCESS};
+        retVal = {
+          statusCode: 200,
+          body: LOGOUT_SUCCESS,
+          clearCookie: {
+            name: 'token',
+            options: {
+              httpOnly: true,
+            },
+          },
+        };
       }
     }
     return retVal;
