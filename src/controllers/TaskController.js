@@ -1,6 +1,8 @@
 import {taskSchema} from '../validations/task';
 const NOT_FOUND = {message: 'Task not found'};
 const INVALID = {message: 'Invalid task'};
+const ADDED = {message: 'Task added'};
+const MODIFIED = {message: 'Task modified'};
 const DELETED = {message: 'Task deleted'};
 
 export function makeTaskController({TaskService}) {
@@ -36,7 +38,7 @@ export function makeTaskController({TaskService}) {
     } else {
       const task = await TaskService.createTask(request.user.id,
           request.body);
-      retVal = {statusCode: 200, body: {task: task}};
+      retVal = {statusCode: 200, body: {task: task, ...ADDED}};
     }
     return retVal;
   }
@@ -64,7 +66,7 @@ export function makeTaskController({TaskService}) {
           {...request.body},
       );
       if (modifyTask) {
-        retVal = {statusCode: 200, body: {task: modifyTask}};
+        retVal = {statusCode: 200, body: {task: modifyTask, ...MODIFIED}};
       } else {
         retVal = {statusCode: 404, body: NOT_FOUND};
       }

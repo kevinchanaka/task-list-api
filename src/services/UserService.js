@@ -20,19 +20,6 @@ export function makeUserService({UserModel}) {
     return user;
   }
 
-  async function createUser(data) {
-    // returns user when created, undefined if user does not exist
-    if (!await UserModel.findByField({email: data.email})) {
-      const user = await makeUserObj(data);
-      await UserModel.insert(user);
-      return {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-      };
-    }
-  }
-
   async function getUserById(id) {
     const user = await UserModel.findByField({id: id});
     if (user) {
@@ -43,6 +30,19 @@ export function makeUserService({UserModel}) {
       };
     } else {
       return undefined;
+    }
+  }
+
+  async function createUser(data) {
+    // returns user when created, undefined if user does not exist
+    if (!await UserModel.findByField({email: data.email})) {
+      const user = await makeUserObj(data);
+      await UserModel.insert(user);
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      };
     }
   }
 

@@ -4,6 +4,8 @@ const INVALID_TOKEN = {message: 'Invalid token'};
 const INCORRECT_CREDS = {message: 'Incorrect username or password'};
 const ALREADY_EXISTS = {message: 'User already exists'};
 const LOGOUT_SUCCESS = {message: 'Logout successful'};
+const ADDED = {message: 'User registered'};
+
 // TODO: Feel like there is too much business logic here
 // would rather move this logic to another service if possible (AuthService)
 // TODO: move data validation to middleware
@@ -24,7 +26,7 @@ export function makeUserController({UserService, TokenService}) {
     } else {
       const user = await UserService.createUser(httpRequest.body);
       if (user) {
-        retVal = {statusCode: 200, body: {user: user}};
+        retVal = {statusCode: 200, body: {user: user, ...ADDED}};
       } else {
         retVal = {statusCode: 400, body: ALREADY_EXISTS};
       }
