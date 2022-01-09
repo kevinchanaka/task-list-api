@@ -1,9 +1,10 @@
 /* generates JWTs for user authorization */
 import jwt from 'jsonwebtoken';
+import dayjs from 'dayjs';
 import {
   ACCESS_TOKEN_SECRET,
   REFRESH_TOKEN_SECRET,
-  REFRESH_TOKEN_EXPIRY_DAYS,
+  REFRESH_TOKEN_EXPIRY,
   ACCESS_TOKEN_EXPIRY,
 } from '../config';
 
@@ -17,23 +18,25 @@ export function makeTokenService({TokenModel}) {
   });
 
   function generateAccessToken(userId) {
-    return jwt.sign({userId: userId},
+    const expiry = computeExpiryTime(ACCESS_TOKEN_EXPIRY);
+    const token = jwt.sign({userId: userId},
         ACCESS_TOKEN_SECRET, {expiresIn: ACCESS_TOKEN_EXPIRY});
+    return {
+      token: token,
+      expiry: expiry,
+    };
   }
 
   async function generateRefreshToken(userId) {
-    const expiry = Math.floor(Date.now() / 1000) +
-      (60 * 60 * 24 * REFRESH_TOKEN_EXPIRY_DAYS);
-    const token = jwt.sign({
-      data: {userId: userId},
-      exp: expiry,
-    }, REFRESH_TOKEN_SECRET);
+    const expiry = computeExpiryTime(REFRESH_TOKEN_EXPIRY);
+    const token = jwt.sign({userId: userId},
+        REFRESH_TOKEN_SECRET, {expiresIn: REFRESH_TOKEN_EXPIRY});
     await TokenModel.insert({
       token: token,
       expiry: expiry,
     });
     return {
-      refreshToken: token,
+      token: token,
       expiry: expiry,
     };
   }
@@ -74,5 +77,12 @@ export function makeTokenService({TokenModel}) {
     } catch (error) {
       return undefined;
     }
+  }
+
+  function computeExpiryTime(expiryTime) {
+    // calculates token expiry time as unix timestamp
+    const unit = expiryTime.slice(-1);
+    const magnitude = parseInt(expiryTime.slice(0, expiryTime.length - 1));
+    return dayjs().add(magnitude, unit).unix();
   }
 }

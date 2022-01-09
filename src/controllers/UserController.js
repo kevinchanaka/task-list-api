@@ -46,57 +46,86 @@ export function makeUserController({UserService, TokenService}) {
     if (validUser) {
       // valid user, generate and return token
       const accessToken = TokenService.generateAccessToken(validUser.id);
-      const {refreshToken, expiry} = await TokenService.
+      const refreshToken = await TokenService.
           generateRefreshToken(validUser.id);
       return {
         statusCode: 200,
         body: {
           user: {
             ...validUser,
-            accessToken: accessToken,
           },
         },
-        cookie: {
-          name: 'token',
-          value: refreshToken,
-          options: {
-            httpOnly: true,
-            expires: new Date(expiry * 1000),
+        cookies: [
+          {
+            name: 'accessToken',
+            value: accessToken.token,
+            options: {
+              httpOnly: true,
+              expires: new Date(accessToken.expiry * 1000),
+            },
           },
-        },
+          {
+            name: 'refreshToken',
+            value: refreshToken.token,
+            options: {
+              httpOnly: true,
+              expires: new Date(refreshToken.expiry * 1000),
+            },
+          },
+        ],
       };
     }
-    return {statusCode: 401, body: INCORRECT_CREDS};
+    return {statusCode: 400, body: INCORRECT_CREDS};
   }
 
   async function getAccessToken(httpRequest) {
-    const refreshToken = httpRequest.cookies.token;
+    const refreshToken = httpRequest.cookies.refreshToken;
     if (refreshToken) {
       const validToken = await TokenService.verifyRefreshToken(refreshToken);
       if (validToken) {
-        const accessToken = TokenService.
-            generateAccessToken(validToken.data.userId);
-        return {statusCode: 200, body: {user: {accessToken: accessToken}}};
+        const accessToken = TokenService.generateAccessToken(validToken.userId);
+        return {
+          statusCode: 200,
+          body: {},
+          cookies: [
+            {
+              name: 'accessToken',
+              value: accessToken.token,
+              options: {
+                httpOnly: true,
+                expires: new Date(accessToken.expiry * 1000),
+              },
+            },
+          ],
+        };
       }
     }
-    return {statusCode: 401, body: INVALID_TOKEN};
+    return {statusCode: 400, body: INVALID_TOKEN};
   }
 
   async function logoutUser(httpRequest) {
     let retVal = {statusCode: 200, body: LOGOUT_SUCCESS};
-    const refreshToken = httpRequest.cookies.token;
+    const refreshToken = httpRequest.cookies.refreshToken;
     if (refreshToken) {
       const deleted = await TokenService.deleteRefreshToken(refreshToken);
       if (deleted) {
         retVal = {
           statusCode: 200,
           body: LOGOUT_SUCCESS,
-          clearCookie: {
-            name: 'token',
-            options: {
-              httpOnly: true,
+          clearCookies: [
+            {
+              name: 'accessToken',
+              options: {
+                httpOnly: true,
+              },
             },
-          },
+            {
+              name: 'refreshToken',
+              options: {
+                httpOnly: true,
+              },
+            },
+          ],
         };
       }
     }

@@ -31,4 +31,4 @@ export const DB_PASSWORD = process.env.DB_PASSWORD;
 export const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
 export const ACCESS_TOKEN_EXPIRY = '5m';
 export const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
-export const REFRESH_TOKEN_EXPIRY_DAYS = 1;
+export const REFRESH_TOKEN_EXPIRY = '1d';

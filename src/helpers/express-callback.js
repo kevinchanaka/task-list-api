@@ -20,13 +20,15 @@ export function expressCallback(controller) {
       if (httpResponse.headers) {
         res.set(httpResponse.headers);
       }
-      if (httpResponse.cookie) {
-        res.cookie(httpResponse.cookie.name, httpResponse.cookie.value,
-            httpResponse.cookie.options);
+      if (httpResponse.cookies) {
+        for (const cookie of httpResponse.cookies) {
+          res.cookie(cookie.name, cookie.value, cookie.options);
+        }
       }
-      if (httpResponse.clearCookie) {
-        res.clearCookie(httpResponse.clearCookie.name,
-            httpResponse.clearCookie.options);
+      if (httpResponse.clearCookies) {
+        for (const cookie of httpResponse.clearCookies) {
+          res.clearCookie(cookie.name, cookie.options);
+        }
       }
       res.type('json');
       res.status(httpResponse.statusCode).send(httpResponse.body);
