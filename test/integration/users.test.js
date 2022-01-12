@@ -25,7 +25,7 @@ describe('Users', () => {
       password: users[0].password,
     });
     expect(res.statusCode).to.equal(200);
-    expect(res.body.user).to.have.property('accessToken');
+    expect(res.headers['set-cookie']).to.have.lengthOf(2);
   });
 
   it('Cannot login with invalid credentials', async () => {
@@ -35,7 +35,7 @@ describe('Users', () => {
       password: users[1].password,
     };
     const res = await UserAPI.loginUser(invalidCreds);
-    expect(res.statusCode).to.equal(401);
+    expect(res.statusCode).to.equal(400);
   });
 
   it('Can fetch new access token for user', async () => {
@@ -44,9 +44,9 @@ describe('Users', () => {
       email: users[0].email,
       password: users[0].password,
     });
-    const res = await UserAPI.getToken(login.headers['set-cookie'][0]);
+    const res = await UserAPI.getToken(login.headers['set-cookie'][1]);
     expect(res.statusCode).to.equal(200);
-    expect(res.body.user).to.have.property('accessToken');
+    expect(res.headers['set-cookie']).to.have.lengthOf(1);
   });
 
   it('Can logout user and invalidate token', async () => {
@@ -55,10 +55,10 @@ describe('Users', () => {
       email: users[0].email,
       password: users[0].password,
     });
-    const cookie = login.headers['set-cookie'][0];
-    const logout = await UserAPI.logoutUser(cookie);
-    const res = await UserAPI.getToken(cookie);
+    const refreshToken = login.headers['set-cookie'][1];
+    const logout = await UserAPI.logoutUser(refreshToken);
+    const res = await UserAPI.getToken(refreshToken);
     expect(logout.statusCode).to.equal(200);
-    expect(res.statusCode).to.equal(401);
+    expect(res.statusCode).to.equal(400);
   });
 });

@@ -8,20 +8,22 @@ describe('TokenService', () => {
   });
 
   it('generates valid access token', async () => {
-    const token = TokenService.generateAccessToken(userId);
-    expect(TokenService.verifyAccessToken(token)).to.not.equal(undefined);
+    const accessToken = TokenService.generateAccessToken(userId);
+    expect(TokenService.verifyAccessToken(accessToken.token))
+        .to.not.equal(undefined);
   });
 
   it('generates valid refresh token', async () => {
-    const {refreshToken} = await TokenService.generateRefreshToken(userId);
-    expect(await TokenService.verifyRefreshToken(refreshToken))
+    const refreshToken = await TokenService.generateRefreshToken(userId);
+    expect(await TokenService.verifyRefreshToken(refreshToken.token))
         .to.not.equal(undefined);
   });
 
   it('deletes refresh token', async () => {
-    const {refreshToken} = await TokenService.generateRefreshToken(userId);
-    await TokenService.deleteRefreshToken(refreshToken);
-    expect(await TokenModel.findAllByField({token: refreshToken})).to.be.empty;
+    const refreshToken = await TokenService.generateRefreshToken(userId);
+    await TokenService.deleteRefreshToken(refreshToken.token);
+    expect(await TokenModel.findAllByField({token: refreshToken.token}))
+        .to.be.empty;
   });
 });
 

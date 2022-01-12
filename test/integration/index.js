@@ -22,7 +22,7 @@ export async function setupUser(user) {
     email: user.email,
     password: user.password,
   });
-  request.set({'Authorization': 'Bearer ' + res.body.user.accessToken});
+  request.set({'Cookie': res.headers['set-cookie'][0]});
 }
 
 // destroy database connection (need to run this after test cases)

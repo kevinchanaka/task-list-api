@@ -6,11 +6,9 @@ const ALREADY_EXISTS = {message: 'User already exists'};
 const LOGOUT_SUCCESS = {message: 'Logout successful'};
 const ADDED = {message: 'User registered'};
 
-// TODO: Feel like there is too much business logic here
-// would rather move this logic to another service if possible (AuthService)
 // TODO: move data validation to middleware
 
-export function makeUserController({UserService, TokenService}) {
+export function makeUserController({AuthService}) {
   return Object.freeze({
     registerUser,
     loginUser,
@@ -24,7 +22,7 @@ export function makeUserController({UserService, TokenService}) {
     if (error) {
       retVal = {statusCode: 400, body: INVALID_USER};
     } else {
-      const user = await UserService.createUser(httpRequest.body);
+      const user = await AuthService.registerUser(httpRequest.body);
       if (user) {
         retVal = {statusCode: 200, body: {user: user, ...ADDED}};
       } else {
@@ -39,20 +37,14 @@ export function makeUserController({UserService, TokenService}) {
     if (error) {
       return {statusCode: 400, body: INVALID_USER};
     }
-    const validUser = await UserService.validateUserCreds({
-      email: httpRequest.body.email,
-      password: httpRequest.body.password,
-    });
-    if (validUser) {
-      // valid user, generate and return token
-      const accessToken = TokenService.generateAccessToken(validUser.id);
-      const refreshToken = await TokenService.
-          generateRefreshToken(validUser.id);
+    const res = await AuthService.loginUser(httpRequest.body);
+    if (res) {
+      const {user, accessToken, refreshToken} = res;
       return {
         statusCode: 200,
         body: {
           user: {
-            ...validUser,
+            ...user,
           },
         },
         cookies: [
@@ -81,9 +73,8 @@ export function makeUserController({UserService, TokenService}) {
   async function getAccessToken(httpRequest) {
     const refreshToken = httpRequest.cookies.refreshToken;
     if (refreshToken) {
-      const validToken = await TokenService.verifyRefreshToken(refreshToken);
-      if (validToken) {
-        const accessToken = TokenService.generateAccessToken(validToken.userId);
+      const accessToken = await AuthService.getAccessToken(refreshToken);
+      if (accessToken) {
         return {
           statusCode: 200,
           body: {},
@@ -107,7 +98,7 @@ export function makeUserController({UserService, TokenService}) {
     let retVal = {statusCode: 200, body: LOGOUT_SUCCESS};
     const refreshToken = httpRequest.cookies.refreshToken;
     if (refreshToken) {
-      const deleted = await TokenService.deleteRefreshToken(refreshToken);
+      const deleted = await AuthService.logoutUser(refreshToken);
       if (deleted) {
         retVal = {
           statusCode: 200,
