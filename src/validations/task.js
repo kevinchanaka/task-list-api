@@ -7,5 +7,6 @@ export const taskSchema = Joi.object({
       .max(NAME_LENGTH),
   description: Joi.string()
       .required()
+      .allow('')
       .max(DEFAULT_LENGTH),
 });
