@@ -1,16 +1,18 @@
-const environment = 'production' || process.env.NODE_ENV;
-
 export const ENV = {account: '436501147244', region: 'ap-southeast-2'};
+
 export const SOURCE_REPO_NAME = 'task-list-api';
 export const SOURCE_REPO_OWNER = 'kevinchanaka';
+export const SOURCE_REPO_BRANCH = 'main';
+export const CODESTAR_CONNECTION_ARN = 'arn:aws:codestar-connections:' +
+'ap-southeast-2:436501147244:connection/0e367578-3062-48ba-9a9a-b1ce675b7720';
 
-export let CODESTAR_CONNECTION_ARN: string;
-export let SOURCE_REPO_BRANCH: string;
-export let DATABASE_NAME: string;
+export const DATABASE_NAME = 'tasklist';
+export const DATABASE_USER = 'task-list-user';
 
-if (environment == 'production') {
-  CODESTAR_CONNECTION_ARN = 'arn:aws:codestar-connections:ap-southeast-2:' +
-    '436501147244:connection/0e367578-3062-48ba-9a9a-b1ce675b7720';
-  SOURCE_REPO_BRANCH = 'main';
-  DATABASE_NAME = 'tasklist';
-}
+export const EKS_CLUSTER_NAME = 'prod';
+export const EKS_OIDC_PROVIDER_ARN = 'arn:aws:iam::436501147244:oidc-provider' +
+'/oidc.eks.ap-southeast-2.amazonaws.com/id/5B2AE7525B2B4B5835ACE1A1F9BD8EAF';
+
+export const VPC_LOOKUP_TAGS = {
+  'aws:cloudformation:stack-name': 'eksctl-prod-cluster',
+};

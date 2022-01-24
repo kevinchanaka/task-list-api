@@ -1,16 +1,17 @@
-import * as cdk from '@aws-cdk/core';
-import * as codebuild from '@aws-cdk/aws-codebuild';
-import * as codepipeline from '@aws-cdk/aws-codepipeline';
-import * as iam from '@aws-cdk/aws-iam';
-import * as codepipelineActions from '@aws-cdk/aws-codepipeline-actions';
-import * as ec2 from '@aws-cdk/aws-ec2';
-import * as ecr from '@aws-cdk/aws-ecr';
+import * as cdk from 'aws-cdk-lib';
+import {aws_codebuild as codebuild} from 'aws-cdk-lib';
+import {aws_codepipeline as codepipeline} from 'aws-cdk-lib';
+import {aws_iam as iam} from 'aws-cdk-lib';
+import {aws_codepipeline_actions as codepipelineActions} from 'aws-cdk-lib';
+import {aws_ec2 as ec2} from 'aws-cdk-lib';
+import {aws_ecr as ecr} from 'aws-cdk-lib';
 import {CODESTAR_CONNECTION_ARN, SOURCE_REPO_OWNER,
   SOURCE_REPO_NAME, SOURCE_REPO_BRANCH} from '../lib/config';
 
 interface PipelineStackProps extends cdk.StackProps {
   vpc: ec2.IVpc,
-  databasePasswordSecret: string,
+  dbAdminCredentials: string,
+  deployVariables: {[key: string]: codebuild.BuildEnvironmentVariable},
 }
 
 export class PipelineStack extends cdk.Stack {
@@ -35,7 +36,11 @@ export class PipelineStack extends cdk.Stack {
 
     const ecrBuildProject = new codebuild.PipelineProject(
         this, 'ECRBuildProject', {
-          buildSpec: codebuild.BuildSpec.fromSourceFilename('buildspec.yaml'),
+          buildSpec: codebuild.BuildSpec.fromSourceFilename(
+              'deploy/config/buildspec.yaml'),
+          environment: {
+            privileged: true,
+          },
           environmentVariables: {
             ECR_REPOSITORY_URI: {
               type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
@@ -57,13 +62,18 @@ export class PipelineStack extends cdk.Stack {
     const eksDeployProject = new codebuild.PipelineProject(
         this, 'EKSDeployProject', {
           buildSpec: codebuild.BuildSpec.fromSourceFilename(
-              'buildspec-deploy.yaml'),
+              'deploy/config/buildspec-deploy.yaml'),
           vpc: props.vpc,
           environmentVariables: {
-            DATABASE_ADMIN_PASSWORD: {
-              type: codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
-              value: props.databasePasswordSecret,
+            ECR_REPOSITORY_URI: {
+              type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
+              value: ecrRepository.repositoryUri,
             },
+            DATABASE_ADMIN_CREDENTIALS: {
+              type: codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
+              value: props.dbAdminCredentials,
+            },
+            ...props.deployVariables,
           },
         });
 
@@ -90,6 +100,7 @@ export class PipelineStack extends cdk.Stack {
     });
 
     new codepipeline.Pipeline(this, 'Pipeline', {
+      crossAccountKeys: false,
       stages: [
         {
           stageName: 'Source',

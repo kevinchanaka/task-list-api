@@ -1,21 +1,20 @@
-import * as cdk from '@aws-cdk/core';
-import * as rds from '@aws-cdk/aws-rds';
-import * as ec2 from '@aws-cdk/aws-ec2';
-import {DATABASE_NAME} from '../lib/config';
-
-interface DatabaseStackProps extends cdk.StackProps {
-  vpc: ec2.IVpc
-}
+import * as cdk from 'aws-cdk-lib';
+import {aws_rds as rds} from 'aws-cdk-lib';
+import {aws_ec2 as ec2} from 'aws-cdk-lib';
+import {VPC_LOOKUP_TAGS} from '../lib/config';
 
 export class DatabaseStack extends cdk.Stack {
-  public readonly databaseAdminPassword: string;
+  public readonly dbAdminCredentials: string;
+  public readonly vpc: ec2.IVpc;
 
-  constructor(scope: cdk.App, id: string, props: DatabaseStackProps) {
+  constructor(scope: cdk.App, id: string, props: cdk.StackProps) {
     super(scope, id, props);
+
+    this.vpc = ec2.Vpc.fromLookup(this, 'Vpc', {tags: VPC_LOOKUP_TAGS});
 
     const databaseSecurityGroup = new ec2.SecurityGroup(
         this, 'DatabaseSecurityGroup', {
-          vpc: props.vpc,
+          vpc: this.vpc,
           allowAllOutbound: true,
         });
 
@@ -26,21 +25,20 @@ export class DatabaseStack extends cdk.Stack {
 
     const databaseInstance = new rds.DatabaseInstance(this, 'Database', {
       engine: rds.DatabaseInstanceEngine.mysql({
-        version: rds.MysqlEngineVersion.of('8.0.25', '8.0'),
+        version: rds.MysqlEngineVersion.VER_8_0_26,
       }),
-      databaseName: DATABASE_NAME,
-      vpc: props.vpc,
+      vpc: this.vpc,
       vpcSubnets: {
-        subnetType: ec2.SubnetType.PRIVATE,
+        subnetType: ec2.SubnetType.PRIVATE_WITH_NAT,
       },
       instanceType: ec2.InstanceType.of(
           ec2.InstanceClass.BURSTABLE3, ec2.InstanceSize.MICRO),
       securityGroups: [databaseSecurityGroup],
-      allocatedStorage: 10,
+      allocatedStorage: 5,
     });
 
     if (databaseInstance.secret) {
-      this.databaseAdminPassword = databaseInstance.secret.secretArn;
+      this.dbAdminCredentials = databaseInstance.secret.secretArn;
     }
   }
 }

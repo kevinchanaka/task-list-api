@@ -1,0 +1,19 @@
+version: 0.2
+# This stage is for running production DB migrations and deploying app to EKS
+phases:
+  install:
+    commands:
+      - echo "Installing required tools"
+      - sudo apt-get update
+      - sudo apt-get install -y apt-transport-https ca-certificates curl
+      - sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+      - echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+      - sudo apt-get update && sudo apt-get install -y kubectl jq gettext-base
+  pre_build:
+    commands:
+      - echo "Updating kubeconfig file"
+      - aws eks update-kubeconfig --name ${EKS_CLUSTER_NAME}
+  build:
+    commands: # TODO: run DB migrations before deploying manifest
+      - echo "Deploying manifest file"
+      - envsubst < deploy/config/manifest.yaml | kubectl apply -f -

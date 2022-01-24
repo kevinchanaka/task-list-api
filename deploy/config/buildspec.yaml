@@ -26,4 +26,4 @@ phases:
 
 artifacts:
   files:
-    - "*.yaml"
+    - "**/*"

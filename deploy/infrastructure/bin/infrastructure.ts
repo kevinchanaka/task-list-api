@@ -1,23 +1,20 @@
 #!/usr/bin/env node
-import 'source-map-support/register';
-import * as cdk from '@aws-cdk/core';
+import * as cdk from 'aws-cdk-lib';
 import {DatabaseStack} from '../lib/database-stack';
 import {PipelineStack} from '../lib/pipeline-stack';
-import {VpcStack} from '../lib/vpc-stack';
+import {AppStack} from '../lib/app-stack';
 import {ENV} from '../lib/config';
 
 const app = new cdk.App();
 const env = ENV;
 
-const vpcStack = new VpcStack(app, 'VpcStack', {env: env});
+const appStack = new AppStack(app, 'AppStack', {env: env});
 
-const databaseStack = new DatabaseStack(app, 'DatabaseStack', {
-  env: env,
-  vpc: vpcStack.vpc,
-});
+const databaseStack = new DatabaseStack(app, 'DatabaseStack', {env: env});
 
 new PipelineStack(app, 'PipelineStack', {
   env: env,
-  vpc: vpcStack.vpc,
-  databasePasswordSecret: databaseStack.databaseAdminPassword,
+  vpc: databaseStack.vpc,
+  dbAdminCredentials: databaseStack.dbAdminCredentials,
+  deployVariables: appStack.deployVariables,
 });
