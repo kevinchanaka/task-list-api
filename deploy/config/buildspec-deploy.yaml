@@ -4,16 +4,22 @@ phases:
   install:
     commands:
       - echo "Installing required tools"
+      - npm install -g knex
       - sudo apt-get update
       - sudo apt-get install -y apt-transport-https ca-certificates curl
       - sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
       - echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
       - sudo apt-get update && sudo apt-get install -y kubectl jq gettext-base
+      - echo "Updating kubeconfig file"
+      - aws eks update-kubeconfig --name ${EKS_CLUSTER_NAME}
   pre_build:
     commands:
       - echo "Updating kubeconfig file"
       - aws eks update-kubeconfig --name ${EKS_CLUSTER_NAME}
   build:
     commands: # TODO: run DB migrations before deploying manifest
+      - echo "Running DB migrations"
+      - npm run -s dbInit
+      - npx knex --esm migrate:latest
       - echo "Deploying manifest file"
       - envsubst < deploy/config/manifest.yaml | kubectl apply -f -

@@ -10,7 +10,6 @@ import {CODESTAR_CONNECTION_ARN, SOURCE_REPO_OWNER,
 
 interface PipelineStackProps extends cdk.StackProps {
   vpc: ec2.IVpc,
-  dbAdminCredentials: string,
   deployVariables: {[key: string]: codebuild.BuildEnvironmentVariable},
 }
 
@@ -68,10 +67,6 @@ export class PipelineStack extends cdk.Stack {
             ECR_REPOSITORY_URI: {
               type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
               value: ecrRepository.repositoryUri,
-            },
-            DATABASE_ADMIN_CREDENTIALS: {
-              type: codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
-              value: props.dbAdminCredentials,
             },
             ...props.deployVariables,
           },

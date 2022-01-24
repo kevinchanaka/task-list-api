@@ -7,7 +7,8 @@
     "devStart": "NODE_ENV=development nodemon --experimental-specifier-resolution=node ./src/index.js",
     "start": "node --experimental-specifier-resolution=node ./src/index.js",
     "test": "NODE_ENV=test mocha --experimental-specifier-resolution=node ./test/unit/*.test.js",
-    "integration": "NODE_ENV=test mocha --experimental-specifier-resolution=node ./test/integration/tests.js"
+    "integration": "NODE_ENV=test mocha --experimental-specifier-resolution=node ./test/integration/tests.js",
+    "dbInit": "node --experimental-specifier-resolution=node ./src/models/bootstrap.js"
   },
   "dependencies": {
     "bcrypt": "^5.0.1",

@@ -15,21 +15,17 @@ db : .env
 	docker network create ${network}
 	docker run --name ${db_dev} -d \
 	  --network ${network} \
-	  -e MYSQL_ROOT_PASSWORD=${DB_PASSWORD} \
-	  -e MYSQL_DATABASE=${DB_NAME} \
-	  -e MYSQL_USER=${DB_USER} \
-	  -e MYSQL_PASSWORD=${DB_PASSWORD} \
+	  -e MYSQL_ROOT_PASSWORD=${DB_ADMIN_PASSWORD} \
 	  -p 33061:3306 \
 	  mysql:8
 	docker run --name ${db_test} -d \
 	  --network ${network} \
-	  -e MYSQL_ROOT_PASSWORD=${DB_PASSWORD} \
-	  -e MYSQL_DATABASE=${DB_NAME} \
-	  -e MYSQL_USER=${DB_USER} \
-	  -e MYSQL_PASSWORD=${DB_PASSWORD} \
+	  -e MYSQL_ROOT_PASSWORD=${DB_ADMIN_PASSWORD} \
 	  -p 33062:3306 \
 	  mysql:8
 	sleep 60
+	npm run -s dbInit
+	NODE_ENV=test npm run -s dbInit
 	npx knex --esm --env development migrate:latest
 	npx knex --esm --env test migrate:latest
 

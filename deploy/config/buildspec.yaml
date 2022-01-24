@@ -23,6 +23,7 @@ phases:
     commands:
       - echo "Cleaning up environment"
       - make clean
+      - rm -rf node_modules
 
 artifacts:
   files:

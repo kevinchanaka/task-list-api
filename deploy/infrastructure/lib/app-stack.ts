@@ -5,13 +5,18 @@ import * as cdk from 'aws-cdk-lib';
 import {aws_iam as iam} from 'aws-cdk-lib';
 import {aws_secretsmanager as secretsmanager} from 'aws-cdk-lib';
 import {aws_codebuild as codebuild} from 'aws-cdk-lib';
-import {EKS_OIDC_PROVIDER_ARN, EKS_CLUSTER_NAME, DATABASE_NAME} from './config';
+import {EKS_OIDC_PROVIDER_ARN, EKS_CLUSTER_NAME,
+  DATABASE_NAME, DATABASE_USER, APP_PORT} from './config';
+
+interface AppStackProps extends cdk.StackProps {
+  dbAdminSecret: secretsmanager.ISecret
+}
 
 export class AppStack extends cdk.Stack {
   public readonly deployVariables:
     {[key: string]: codebuild.BuildEnvironmentVariable}
 
-  constructor(scope: cdk.App, id: string, props: cdk.StackProps) {
+  constructor(scope: cdk.App, id: string, props: AppStackProps) {
     super(scope, id, props);
 
     const accessTokenSecret = new secretsmanager.Secret(this,
@@ -37,7 +42,7 @@ export class AppStack extends cdk.Stack {
         {
           generateSecretString: {
             generateStringKey: 'password',
-            secretStringTemplate: JSON.stringify({username: 'task-list-user'}),
+            secretStringTemplate: JSON.stringify({username: DATABASE_USER}),
           },
         });
 
@@ -73,13 +78,49 @@ export class AppStack extends cdk.Stack {
     });
 
     this.deployVariables = {
-      DATABASE_NAME: {
+      NODE_ENV: {
+        type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
+        value: 'production',
+      },
+      PORT: {
+        type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
+        value: APP_PORT,
+      },
+      DB_ADMIN_USER: {
+        type: codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
+        value: props.dbAdminSecret.secretName + ':username',
+      },
+      DB_ADMIN_PASSWORD: {
+        type: codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
+        value: props.dbAdminSecret.secretName + ':password',
+      },
+      DB_USER: {
+        type: codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
+        value: databaseUserCredentials.secretName + ':username',
+      },
+      DB_PASSWORD: {
+        type: codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
+        value: databaseUserCredentials.secretName + ':password',
+      },
+      DB_NAME: {
         type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
         value: DATABASE_NAME,
       },
-      DATABASE_USER_CREDENTIALS: {
+      DB_HOST: {
         type: codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
-        value: databaseUserCredentials,
+        value: props.dbAdminSecret.secretName + ':host',
+      },
+      DB_PORT: {
+        type: codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
+        value: props.dbAdminSecret.secretName + ':port',
+      },
+      ACCESS_TOKEN_SECRET: {
+        type: codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
+        value: accessTokenSecret.secretName,
+      },
+      REFRESH_TOKEN_SECRET: {
+        type: codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
+        value: refreshTokenSecret.secretName,
       },
       EKS_CLUSTER_NAME: {
         type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
@@ -88,14 +129,6 @@ export class AppStack extends cdk.Stack {
       APP_IAM_ROLE_ARN: {
         type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
         value: taskListApiRole.roleArn,
-      },
-      ACCESS_TOKEN_SECRET: {
-        type: codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
-        value: accessTokenSecret,
-      },
-      REFRESH_TOKEN_SECRET: {
-        type: codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
-        value: refreshTokenSecret,
       },
     };
   }

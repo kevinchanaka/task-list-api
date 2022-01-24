@@ -28,6 +28,10 @@ export const DB_TEST_PORT = process.env.DB_TEST_PORT || 33062;
 export const DB_USER = process.env.DB_USER;
 export const DB_PASSWORD = process.env.DB_PASSWORD;
 
+// Database admin user and password, used to bootstrap database
+export const DB_ADMIN_USER = process.env.DB_ADMIN_USER;
+export const DB_ADMIN_PASSWORD = process.env.DB_ADMIN_PASSWORD;
+
 export const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
 export const ACCESS_TOKEN_EXPIRY = '5m';
 export const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;

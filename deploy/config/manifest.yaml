@@ -6,6 +6,34 @@ metadata:
 ---
 
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: task-list-api-config
+  namespace: task-list
+data:
+  NODE_ENV: ${NODE_ENV}
+  PORT: ${PORT}
+  DB_NAME: ${DB_NAME}
+  DB_HOST: ${DB_HOST}
+  DB_PORT: ${DB_PORT}
+
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: task-list-api-secrets
+  namespace: task-list
+type: Opaque
+data:
+  DB_USER: ${DB_USER}
+  DB_PASSWORD: ${DB_PASSWORD}
+  ACCESS_TOKEN_SECRET: ${ACCESS_TOKEN_SECRET}
+  REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET}
+
+---
+
+apiVersion: v1
 kind: ServiceAccount
 metadata:
   annotations:

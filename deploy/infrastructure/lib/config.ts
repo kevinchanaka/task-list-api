@@ -8,6 +8,7 @@ export const CODESTAR_CONNECTION_ARN = 'arn:aws:codestar-connections:' +
 
 export const DATABASE_NAME = 'tasklist';
 export const DATABASE_USER = 'task-list-user';
+export const APP_PORT = 3000;
 
 export const EKS_CLUSTER_NAME = 'prod';
 export const EKS_OIDC_PROVIDER_ARN = 'arn:aws:iam::436501147244:oidc-provider' +
