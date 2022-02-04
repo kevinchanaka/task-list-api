@@ -27,11 +27,15 @@ export class PipelineStack extends cdk.Stack {
         'ecr:BatchGetImage',
         'ecr:BatchDeleteImage',
         'ecr:PutImage',
+        'ecr:InitiateLayerUpload',
         'ecr:UploadLayerPart',
+        'ecr:CompleteLayerUpload',
       ],
     });
 
-    const ecrRepository = new ecr.Repository(this, 'ECRRepository', {});
+    const ecrRepository = new ecr.Repository(this, 'ECRRepository', {
+      repositoryName: 'task-list-api',
+    });
 
     const ecrBuildProject = new codebuild.PipelineProject(
         this, 'ECRBuildProject', {
@@ -39,6 +43,8 @@ export class PipelineStack extends cdk.Stack {
               'deploy/config/buildspec.yaml'),
           environment: {
             privileged: true,
+            buildImage: codebuild.LinuxBuildImage.STANDARD_5_0,
+            computeType: codebuild.ComputeType.SMALL,
           },
           environmentVariables: {
             ECR_REPOSITORY_URI: {
@@ -63,6 +69,10 @@ export class PipelineStack extends cdk.Stack {
           buildSpec: codebuild.BuildSpec.fromSourceFilename(
               'deploy/config/buildspec-deploy.yaml'),
           vpc: props.vpc,
+          environment: {
+            buildImage: codebuild.LinuxBuildImage.STANDARD_5_0,
+            computeType: codebuild.ComputeType.SMALL,
+          },
           environmentVariables: {
             ECR_REPOSITORY_URI: {
               type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,

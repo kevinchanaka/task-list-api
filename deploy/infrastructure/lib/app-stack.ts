@@ -88,19 +88,19 @@ export class AppStack extends cdk.Stack {
       },
       DB_ADMIN_USER: {
         type: codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
-        value: props.dbAdminSecret.secretName + ':username',
+        value: props.dbAdminSecret.secretArn + ':username',
       },
       DB_ADMIN_PASSWORD: {
         type: codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
-        value: props.dbAdminSecret.secretName + ':password',
+        value: props.dbAdminSecret.secretArn + ':password',
       },
       DB_USER: {
         type: codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
-        value: databaseUserCredentials.secretName + ':username',
+        value: databaseUserCredentials.secretArn + ':username',
       },
       DB_PASSWORD: {
         type: codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
-        value: databaseUserCredentials.secretName + ':password',
+        value: databaseUserCredentials.secretArn + ':password',
       },
       DB_NAME: {
         type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
@@ -108,19 +108,19 @@ export class AppStack extends cdk.Stack {
       },
       DB_HOST: {
         type: codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
-        value: props.dbAdminSecret.secretName + ':host',
+        value: props.dbAdminSecret.secretArn + ':host',
       },
       DB_PORT: {
         type: codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
-        value: props.dbAdminSecret.secretName + ':port',
+        value: props.dbAdminSecret.secretArn + ':port',
       },
       ACCESS_TOKEN_SECRET: {
         type: codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
-        value: accessTokenSecret.secretName,
+        value: accessTokenSecret.secretArn,
       },
       REFRESH_TOKEN_SECRET: {
         type: codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
-        value: refreshTokenSecret.secretName,
+        value: refreshTokenSecret.secretArn,
       },
       EKS_CLUSTER_NAME: {
         type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
