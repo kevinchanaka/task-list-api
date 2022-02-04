@@ -1,5 +1,5 @@
-version: 0.2
 # This stage is for running production DB migrations and deploying app to EKS
+version: 0.2
 phases:
   install:
     commands:
@@ -14,10 +14,13 @@ phases:
       - aws eks update-kubeconfig --name ${EKS_CLUSTER_NAME}
   pre_build:
     commands:
-      - echo "Updating kubeconfig file"
-      - aws eks update-kubeconfig --name ${EKS_CLUSTER_NAME}
+      - echo "Setting variables"
+      - export DB_USER=`echo -n ${DB_USER} | base64`
+      - export DB_PASSWORD=`echo -n ${DB_PASSWORD} | base64`
+      - export ACCESS_TOKEN_SECRET=`echo -n ${ACCESS_TOKEN_SECRET} | base64`
+      - export REFRESH_TOKEN_SECRET=`echo -n ${REFRESH_TOKEN_SECRET} | base64`
   build:
-    commands: # TODO: run DB migrations before deploying manifest
+    commands:
       - echo "Running DB migrations"
       - npm run -s dbInit
       - npx knex --esm migrate:latest
