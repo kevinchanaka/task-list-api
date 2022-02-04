@@ -23,7 +23,7 @@ export class PipelineStack extends cdk.Stack {
 
     const ecrAccessPolicy = new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
-      resources: [ecrRepository.repositoryArn],
+      resources: ['*'],
       actions: [
         'ecr:GetAuthorizationToken',
         'ecr:GetDownloadUrlForLayer',
@@ -38,7 +38,7 @@ export class PipelineStack extends cdk.Stack {
     });
 
     const ecrBuildProject = new codebuild.PipelineProject(
-        this, 'ECRBuildProject', {
+        this, 'TaskListApiBuild', {
           buildSpec: codebuild.BuildSpec.fromSourceFilename(
               'deploy/config/buildspec.yaml'),
           environment: {
@@ -73,7 +73,7 @@ export class PipelineStack extends cdk.Stack {
     });
 
     const eksDeployProject = new codebuild.PipelineProject(
-        this, 'EKSDeployProject', {
+        this, 'TaskListApiDeploy', {
           buildSpec: codebuild.BuildSpec.fromSourceFilename(
               'deploy/config/buildspec-deploy.yaml'),
           vpc: props.vpc,
@@ -114,7 +114,7 @@ export class PipelineStack extends cdk.Stack {
       project: eksDeployProject,
     });
 
-    new codepipeline.Pipeline(this, 'Pipeline', {
+    new codepipeline.Pipeline(this, 'TaskListApiPipeline', {
       crossAccountKeys: false,
       stages: [
         {

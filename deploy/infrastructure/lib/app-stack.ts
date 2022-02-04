@@ -24,7 +24,7 @@ export class AppStack extends cdk.Stack {
         {
           generateSecretString: {
             excludePunctuation: true,
-            passwordLength: 200,
+            passwordLength: 50,
           },
         });
 
@@ -33,7 +33,7 @@ export class AppStack extends cdk.Stack {
         {
           generateSecretString: {
             excludePunctuation: true,
-            passwordLength: 200,
+            passwordLength: 50,
           },
         });
 

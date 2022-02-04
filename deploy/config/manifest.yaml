@@ -12,10 +12,10 @@ metadata:
   namespace: task-list
 data:
   NODE_ENV: ${NODE_ENV}
-  PORT: ${PORT}
+  PORT: "${PORT}"
   DB_NAME: ${DB_NAME}
   DB_HOST: ${DB_HOST}
-  DB_PORT: ${DB_PORT}
+  DB_PORT: "${DB_PORT}"
 
 ---
 
@@ -70,9 +70,6 @@ spec:
         - secretRef:
             name: task-list-api-secrets
             optional: false
-        volumeMounts:
-        - name: minecraft-data
-          mountPath: /data
         ports:
         - containerPort: 3000
       serviceAccountName: task-list-api
@@ -109,7 +106,7 @@ spec:
   rules:
   - http:
       paths:
-      - path: /api/*
+      - path: /api/
         pathType: Prefix
         backend:
           service:
