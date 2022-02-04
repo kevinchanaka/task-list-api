@@ -11,6 +11,8 @@ export const DATABASE_USER = 'task-list-user';
 export const APP_PORT = 3000;
 
 export const EKS_CLUSTER_NAME = 'prod';
+export const EKS_CLUSTER_ARN =
+  'arn:aws:eks:ap-southeast-2:436501147244:cluster/prod';
 export const EKS_OIDC_PROVIDER_ARN = 'arn:aws:iam::436501147244:oidc-provider' +
 '/oidc.eks.ap-southeast-2.amazonaws.com/id/5B2AE7525B2B4B5835ACE1A1F9BD8EAF';
 

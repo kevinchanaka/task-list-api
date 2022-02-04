@@ -5,7 +5,7 @@ import {aws_iam as iam} from 'aws-cdk-lib';
 import {aws_codepipeline_actions as codepipelineActions} from 'aws-cdk-lib';
 import {aws_ec2 as ec2} from 'aws-cdk-lib';
 import {aws_ecr as ecr} from 'aws-cdk-lib';
-import {CODESTAR_CONNECTION_ARN, SOURCE_REPO_OWNER,
+import {CODESTAR_CONNECTION_ARN, EKS_CLUSTER_ARN, SOURCE_REPO_OWNER,
   SOURCE_REPO_NAME, SOURCE_REPO_BRANCH} from '../lib/config';
 
 interface PipelineStackProps extends cdk.StackProps {
@@ -17,9 +17,13 @@ export class PipelineStack extends cdk.Stack {
   constructor(scope: cdk.App, id: string, props: PipelineStackProps) {
     super(scope, id, props);
 
+    const ecrRepository = new ecr.Repository(this, 'ECRRepository', {
+      repositoryName: 'task-list-api',
+    });
+
     const ecrAccessPolicy = new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
-      resources: ['*'],
+      resources: [ecrRepository.repositoryArn],
       actions: [
         'ecr:GetAuthorizationToken',
         'ecr:GetDownloadUrlForLayer',
@@ -31,10 +35,6 @@ export class PipelineStack extends cdk.Stack {
         'ecr:UploadLayerPart',
         'ecr:CompleteLayerUpload',
       ],
-    });
-
-    const ecrRepository = new ecr.Repository(this, 'ECRRepository', {
-      repositoryName: 'task-list-api',
     });
 
     const ecrBuildProject = new codebuild.PipelineProject(
@@ -64,6 +64,14 @@ export class PipelineStack extends cdk.Stack {
 
     ecrBuildProject.addToRolePolicy(ecrAccessPolicy);
 
+    const eksDeployPolicy = new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      resources: [EKS_CLUSTER_ARN],
+      actions: [
+        'eks:DescribeCluster',
+      ],
+    });
+
     const eksDeployProject = new codebuild.PipelineProject(
         this, 'EKSDeployProject', {
           buildSpec: codebuild.BuildSpec.fromSourceFilename(
@@ -81,6 +89,8 @@ export class PipelineStack extends cdk.Stack {
             ...props.deployVariables,
           },
         });
+
+    eksDeployProject.addToRolePolicy(eksDeployPolicy);
 
     const sourceAction = new codepipelineActions.
         CodeStarConnectionsSourceAction({
