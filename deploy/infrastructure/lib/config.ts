@@ -19,3 +19,6 @@ export const EKS_OIDC_PROVIDER_ARN = 'arn:aws:iam::436501147244:oidc-provider' +
 export const VPC_LOOKUP_TAGS = {
   'aws:cloudformation:stack-name': 'eksctl-prod-cluster',
 };
+
+export const ACM_CERT_ARN = 'arn:aws:acm:ap-southeast-2:436501147244:' +
+  'certificate/93bc5f1c-fd64-44ce-bedf-02b9d5e22fae';
