@@ -6,7 +6,7 @@ import {aws_iam as iam} from 'aws-cdk-lib';
 import {aws_secretsmanager as secretsmanager} from 'aws-cdk-lib';
 import {aws_codebuild as codebuild} from 'aws-cdk-lib';
 import {EKS_OIDC_PROVIDER_ARN, EKS_CLUSTER_NAME,
-  DATABASE_NAME, DATABASE_USER, APP_PORT, ACM_CERT_ARN} from './config';
+  DATABASE_NAME, DATABASE_USER, APP_PORT} from './config';
 
 interface AppStackProps extends cdk.StackProps {
   dbAdminSecret: secretsmanager.ISecret
@@ -41,6 +41,7 @@ export class AppStack extends cdk.Stack {
         'DatabaseUserCredentials',
         {
           generateSecretString: {
+            excludePunctuation: true,
             generateStringKey: 'password',
             secretStringTemplate: JSON.stringify({username: DATABASE_USER}),
           },
@@ -129,10 +130,6 @@ export class AppStack extends cdk.Stack {
       APP_IAM_ROLE_ARN: {
         type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
         value: taskListApiRole.roleArn,
-      },
-      ACM_CERT_ARN: {
-        type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
-        value: ACM_CERT_ARN,
       },
     };
   }

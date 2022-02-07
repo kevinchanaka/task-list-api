@@ -2,7 +2,7 @@ export const ENV = {account: '436501147244', region: 'ap-southeast-2'};
 
 export const SOURCE_REPO_NAME = 'task-list-api';
 export const SOURCE_REPO_OWNER = 'kevinchanaka';
-export const SOURCE_REPO_BRANCH = 'main';
+export const SOURCE_REPO_BRANCH = 'fix-cicd-pipeline';
 export const CODESTAR_CONNECTION_ARN = 'arn:aws:codestar-connections:' +
 'ap-southeast-2:436501147244:connection/0e367578-3062-48ba-9a9a-b1ce675b7720';
 
@@ -19,6 +19,3 @@ export const EKS_OIDC_PROVIDER_ARN = 'arn:aws:iam::436501147244:oidc-provider' +
 export const VPC_LOOKUP_TAGS = {
   'aws:cloudformation:stack-name': 'eksctl-prod-cluster',
 };
-
-export const ACM_CERT_ARN = 'arn:aws:acm:ap-southeast-2:436501147244:' +
-  'certificate/93bc5f1c-fd64-44ce-bedf-02b9d5e22fae';

@@ -3,26 +3,29 @@ version: 0.2
 phases:
   install:
     commands:
+      - echo "Get EKS cluster version"
+      - CLUSTER_VERSION=`aws eks describe-cluster --name ${EKS_CLUSTER_NAME} | jq -r .cluster.version`
+      - KUBECTL_VERSION=${CLUSTER_VERSION}.0-00
       - echo "Installing required tools"
       - npm install knex
       - apt-get update
       - apt-get install -y apt-transport-https ca-certificates curl
       - curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
       - echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
-      - apt-get update && apt-get install -y kubectl jq gettext-base
+      - apt-get update && apt-get install -y kubectl=${KUBECTL_VERSION} jq gettext-base
       - echo "Updating kubeconfig file"
       - aws eks update-kubeconfig --name ${EKS_CLUSTER_NAME}
   pre_build:
+    commands:
+      - echo "Running DB migrations"
+      - npm run -s dbInit
+      - npx knex --esm migrate:latest
+  build:
     commands:
       - echo "Setting variables"
       - export DB_USER=`echo -n ${DB_USER} | base64`
       - export DB_PASSWORD=`echo -n ${DB_PASSWORD} | base64`
       - export ACCESS_TOKEN_SECRET=`echo -n ${ACCESS_TOKEN_SECRET} | base64`
       - export REFRESH_TOKEN_SECRET=`echo -n ${REFRESH_TOKEN_SECRET} | base64`
-  build:
-    commands:
-      - echo "Running DB migrations"
-      - npm run -s dbInit
-      - npx knex --esm migrate:latest
       - echo "Deploying manifest file"
       - envsubst < deploy/config/manifest.yaml | kubectl apply -f -
