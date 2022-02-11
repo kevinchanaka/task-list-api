@@ -2,7 +2,7 @@ export const ENV = {account: '436501147244', region: 'ap-southeast-2'};
 
 export const SOURCE_REPO_NAME = 'task-list-api';
 export const SOURCE_REPO_OWNER = 'kevinchanaka';
-export const SOURCE_REPO_BRANCH = 'fix-cicd-pipeline';
+export const SOURCE_REPO_BRANCH = 'main';
 export const CODESTAR_CONNECTION_ARN = 'arn:aws:codestar-connections:' +
 'ap-southeast-2:436501147244:connection/0e367578-3062-48ba-9a9a-b1ce675b7720';
 
