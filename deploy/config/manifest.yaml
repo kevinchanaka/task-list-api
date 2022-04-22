@@ -113,6 +113,7 @@ metadata:
     alb.ingress.kubernetes.io/healthcheck-path: '/api/v1/health'
     alb.ingress.kubernetes.io/healthcheck-interval-seconds: '30'
     alb.ingress.kubernetes.io/target-group-attributes: deregistration_delay.timeout_seconds=60
+    alb.ingress.kubernetes.io/tags: auto-delete=no
     alb.ingress.kubernetes.io/group.name: task-list
 spec:
   rules:
