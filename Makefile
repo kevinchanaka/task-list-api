@@ -1,7 +1,6 @@
 -include .env
-.PHONY: all db build app start stop clean
+.PHONY: all db build app start stop clean test
 
-network=task-list
 db_dev=db-task-list-dev
 db_test=db-task-list-test
 app=task-list-api
@@ -12,29 +11,22 @@ all : db
 	./deploy/config/generate-env.sh
 
 db : .env
-	docker network create ${network}
 	docker run --name ${db_dev} -d \
-	  --network ${network} \
 	  -e MYSQL_ROOT_PASSWORD=${DB_ADMIN_PASSWORD} \
 	  -p 33061:3306 \
 	  mysql:8
 	docker run --name ${db_test} -d \
-	  --network ${network} \
 	  -e MYSQL_ROOT_PASSWORD=${DB_ADMIN_PASSWORD} \
 	  -p 33062:3306 \
 	  mysql:8
 	sleep 60
-	npm run -s dbInit
-	NODE_ENV=test npm run -s dbInit
-	npx knex --esm --env development migrate:latest
-	npx knex --esm --env test migrate:latest
+	python -m migrations.bootstrap
 
 build :
 	docker build -t ${app} .
 
 app : .env
 	docker run --name ${app} -d \
-	  --network ${network} \
 	  -e DB_HOST=${db_dev} \
 	  -e DB_NAME=${DB_NAME} \
 	  -e DB_PORT=3306 \
@@ -51,4 +43,3 @@ stop :
 
 clean : stop
 	-docker rm ${db_dev} ${db_test} ${app}
-	-docker network rm ${network}
