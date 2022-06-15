@@ -1,6 +1,6 @@
 from flask import Blueprint, request, make_response, jsonify
 from api.services import user_service
-from api.decorators import validator, refresh_token_exists
+from api.decorators import validator, refresh_token_required
 from api.config import (
     NAME_LENGTH,
     DEFAULT_LENGTH,
@@ -73,7 +73,7 @@ def logout():
 
 
 @bp.route("/token", methods=["POST"])
-@refresh_token_exists
+@refresh_token_required
 def token():
     refresh_token = request.cookies["refresh_token"]
     token, msg = user_service.refresh_credentials(refresh_token)

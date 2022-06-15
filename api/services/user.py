@@ -14,7 +14,7 @@ class UserService:
             "email": data["email"],
         }
 
-    def __remove_password_hash__(self, user):
+    def __remove_password_hash__(self, user: dict):
         return {k: user[k] for k in user.keys() if k != "password_hash"}
 
     def register_user(self, data):
@@ -23,7 +23,7 @@ class UserService:
             raise InvalidUsageError("User already registered")
         user = self.__make_user__(data)
         user_model.add(user)
-        return self.__remove_password_hash__(user)
+        return {"user": self.__remove_password_hash__(user)}
 
     def login_user(self, data):
         user = user_model.get({"email": data["email"]})

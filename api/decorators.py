@@ -21,7 +21,7 @@ def validator(schema: dict):
     return validator_decorator
 
 
-def refresh_token_exists(func):
+def refresh_token_required(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         if request.cookies.get("refresh_token"):
