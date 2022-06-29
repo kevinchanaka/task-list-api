@@ -7,6 +7,7 @@ from api.config import (
     ACCESS_TOKEN_EXPIRY,
     REFRESH_TOKEN_EXPIRY,
 )
+from api.models import User
 
 bp = Blueprint("users", __name__, url_prefix="/api/v1/users")
 
@@ -38,7 +39,8 @@ user_login_schema = {
 @validator(user_register_schema)
 def register():
     data = request.get_json()
-    user = user_service.register_user(data)
+    user_obj = User.deserialise(**data)
+    user = user_service.register_user(user_obj)
     return jsonify(user)
 
 
@@ -46,7 +48,7 @@ def register():
 @validator(user_login_schema)
 def login():
     data = request.get_json()
-    user, tokens = user_service.login_user(data)
+    user, tokens = user_service.login_user(data["email"], data["password"])
     res = make_response(user)
     res.set_cookie(
         "access_token",

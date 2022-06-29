@@ -6,7 +6,8 @@ from api.config import (
     ACCESS_TOKEN_EXPIRY,
     REFRESH_TOKEN_EXPIRY,
 )
-from api.models import token_model
+from api.database import token_db
+from api.models import Token
 from api.exceptions import InvalidTokenError
 
 
@@ -27,7 +28,8 @@ class TokenService:
             "exp": expiry,
         }
         token = jwt.encode(payload, REFRESH_TOKEN_SECRET, algorithm="HS256")
-        token_model.add({"token": token, "expiry": expiry})
+        token_obj = Token.deserialise(token=token, expiry=expiry)
+        token_db.add(token_obj)
         return token
 
     def verify_access_token(self, token: str):
@@ -37,14 +39,14 @@ class TokenService:
             raise InvalidTokenError
 
     def verify_refresh_token(self, token: str):
-        if token_model.get({"token": token}):
+        if token_db.get(token=token):
             try:
                 return jwt.decode(token, REFRESH_TOKEN_SECRET, algorithms=["HS256"])
             except jwt.exceptions.InvalidTokenError:
                 raise InvalidTokenError
 
     def delete_refresh_token(self, token: str):
-        token_model.delete({"token": token})
+        token_db.delete(token=token)
 
 
 token_service = TokenService()

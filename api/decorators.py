@@ -21,6 +21,23 @@ def validator(schema: dict):
     return validator_decorator
 
 
+def validator_new(validation_func):
+    def validator_decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            payload = request.get_json()
+            errors = validation_func(**payload)
+            if errors:
+                print(errors)
+                raise ValidationError
+            else:
+                return func(payload=payload, *args, **kwargs)
+
+        return wrapper
+
+    return validator_decorator
+
+
 def refresh_token_required(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -41,6 +58,6 @@ def login_required(func):
 
         payload = token_service.verify_access_token(access_token)
         user_id: str = payload["user_id"]
-        return func(user_id, *args, **kwargs)
+        return func(user_id=user_id, *args, **kwargs)
 
     return wrapper

@@ -1,43 +1,36 @@
-import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
-from api.models import user_model
+from api.database import user_db
 from api.services.token import token_service
 from api.exceptions import InvalidUsageError
+from api.models import User
 
 
 class UserService:
-    def __make_user__(self, data):
-        return {
-            "id": uuid.uuid4().__str__(),
-            "name": data["name"],
-            "password_hash": generate_password_hash(data["password"]),
-            "email": data["email"],
-        }
-
-    def __remove_password_hash__(self, user: dict):
-        return {k: user[k] for k in user.keys() if k != "password_hash"}
-
-    def register_user(self, data):
-        exists = user_model.get({"email": data["email"]})
+    def register_user(self, user: User):
+        exists = user_db.get(email=user.email)
         if exists:
             raise InvalidUsageError("User already registered")
-        user = self.__make_user__(data)
-        user_model.add(user)
-        return {"user": self.__remove_password_hash__(user)}
 
-    def login_user(self, data):
-        user = user_model.get({"email": data["email"]})
-        if not user or not check_password_hash(user["password_hash"], data["password"]):
+        user.password_hash = generate_password_hash(user.password)
+        user.password = None
+        user_db.add(user)
+        return {"user": user.serialise_public()}
+
+    def login_user(self, email: str, password: str):
+        user: User = user_db.get(email=email)
+        if not user or not check_password_hash(user.password_hash, password):
             raise InvalidUsageError("Email or password is incorrect")
+
         tokens = {
-            "access_token": token_service.generate_access_token(user["id"]),
-            "refresh_token": token_service.generate_refresh_token(user["id"]),
+            "access_token": token_service.generate_access_token(str(user.id)),
+            "refresh_token": token_service.generate_refresh_token(str(user.id)),
         }
-        return {"user": self.__remove_password_hash__(user)}, tokens
+        return {"user": user.serialise_public()}, tokens
 
     def logout_user(self, token: str):
         if token:
             token_service.delete_refresh_token(token)
+
         return {"message": "User logged out"}
 
     def refresh_credentials(self, refresh_token: str):
