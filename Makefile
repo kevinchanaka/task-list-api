@@ -1,5 +1,5 @@
 -include .env
-.PHONY: all db build app start stop clean test
+.PHONY: all db build app start stop unit-test integration-test clean
 
 db_dev=db-task-list-dev
 db_test=db-task-list-test
@@ -21,6 +21,9 @@ db : .env
 	  mysql:8
 	sleep 60
 	python -m migrations.bootstrap
+	ENV=test python -m migrations.bootstrap
+	alembic --config migrations/alembic.ini upgrade head
+	ENV=test alembic --config migrations/alembic.ini upgrade head
 
 build :
 	docker build -t ${app} .
@@ -40,6 +43,12 @@ start :
 
 stop :
 	-docker stop ${db_dev} ${db_test} ${app}
+
+unit-test :
+	ENV=test python -m unittest -v tests/unit/test_*.py
+
+integration-test :
+	ENV=test python -m unittest -v tests/integration/test_*.py
 
 clean : stop
 	-docker rm ${db_dev} ${db_test} ${app}

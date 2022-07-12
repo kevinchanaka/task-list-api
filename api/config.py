@@ -2,14 +2,15 @@ import os
 from dotenv import load_dotenv
 from datetime import timedelta
 
-NAME_LENGTH = 60
-DEFAULT_LENGTH = 255
-
 ENV = os.getenv("ENV", "development")
 
 if ENV != "production":
     load_dotenv()
 
+if ENV == "test":
+    DB_PORT = os.getenv("DB_TEST_PORT")
+else:
+    DB_PORT = os.getenv("DB_PORT")
 
 PORT = os.getenv("PORT", 5000)
 
@@ -21,10 +22,9 @@ DEFAULT_LENGTH = 255
 
 DB_NAME = os.getenv("DB_NAME")
 DB_HOST = os.getenv("DB_HOST")
-DB_PORT = os.getenv("DB_PORT")
-DB_TEST_PORT = os.getenv("DB_TEST_PORT")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
+
 DB_CONNECTION_STRING = "mysql://{}:{}@{}:{}/{}".format(
     DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
 )

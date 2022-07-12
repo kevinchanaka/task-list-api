@@ -14,18 +14,16 @@ class UserService:
         user.password_hash = generate_password_hash(user.password)
         user.password = None
         user_db.add(user)
-        return {"user": user.serialise_public()}
+        return {"user": user.serialise_public(), "message": "User registered"}
 
     def login_user(self, email: str, password: str):
         user: User = user_db.get(email=email)
         if not user or not check_password_hash(user.password_hash, password):
             raise InvalidUsageError("Email or password is incorrect")
 
-        tokens = {
-            "access_token": token_service.generate_access_token(str(user.id)),
-            "refresh_token": token_service.generate_refresh_token(str(user.id)),
-        }
-        return {"user": user.serialise_public()}, tokens
+        access_token = token_service.generate_access_token(str(user.id))
+        refresh_token = token_service.generate_refresh_token(str(user.id))
+        return {"user": user.serialise_public()}, access_token, refresh_token
 
     def logout_user(self, token: str):
         if token:
@@ -35,6 +33,5 @@ class UserService:
 
     def refresh_credentials(self, refresh_token: str):
         payload = token_service.verify_refresh_token(refresh_token)
-        return {
-            "access_token": token_service.generate_access_token(payload["user_id"])
-        }, {"message": "Token refreshed"}
+        access_token = token_service.generate_access_token(payload["user_id"])
+        return {"message": "Token refreshed"}, access_token

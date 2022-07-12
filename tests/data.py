@@ -1,24 +1,12 @@
-tasks = [
-    {"name": "task1", "description": "desc1"},
-    {"name": "task2", "description": "desc2"},
-    {"name": "task3", "description": "desc3"},
-]
+test_user = {"name": "foobar", "password": "foobar123", "email": "foobar@example.com"}
 
-invalid_tasks = [
-    {"name": "", "description": "desc1"},
-    {"name": "task1", "description": ""},
-]
+test_task = {
+    "name": "task1",
+    "description": "desc1",
+    "user_id": "040be8bc-a654-4b44-ac24-fa6fd9c5e138",
+}
 
-users = [
-    {"name": "foobar", "password": "foobar123", "email": "foobar@example.com"},
-    {
-        "name": "deadbeef",
-        "password": "deadbeef123",
-        "email": "deadbeef@example.com",
-    },
-]
-
-invalid_users = [
-    {"name": "", "password": "foobar123", "email": "foobar@example.com"},
-    {"name": "deadbeef", "password": "deadbeef123", "email": "deadbeef"},
-]
+test_task_no_id = {
+    "name": "task1",
+    "description": "desc1",
+}

@@ -1,32 +1,16 @@
 import functools
-from cerberus import Validator
 from flask import request
 from api.services.token import token_service
 from api.exceptions import ValidationError, NotLoggedInError
+from api.models import Model
 
 
-def validator(schema: dict):
-    data_valid = Validator(schema)
-
-    def validator_decorator(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            if data_valid(request.get_json()):
-                return func(*args, **kwargs)
-            else:
-                raise ValidationError
-
-        return wrapper
-
-    return validator_decorator
-
-
-def validator_new(validation_func):
+def validator(model: Model):
     def validator_decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             payload = request.get_json()
-            errors = validation_func(**payload)
+            errors = model.validate(payload)
             if errors:
                 print(errors)
                 raise ValidationError
@@ -41,8 +25,9 @@ def validator_new(validation_func):
 def refresh_token_required(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        if request.cookies.get("refresh_token"):
-            return func(*args, **kwargs)
+        refresh_token = request.cookies.get("refresh_token", None)
+        if refresh_token:
+            return func(refresh_token=refresh_token, *args, **kwargs)
         else:
             raise NotLoggedInError
 

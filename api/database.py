@@ -43,7 +43,7 @@ class Database:
         Populates additional data to dictionary
         Returns True if add was successful, False otherwise
         """
-        query = self.table.insert().values(**(obj.serialise()))
+        query = self.table.insert().values(obj.serialise())
         with self.engine.connect() as conn:
             result = conn.execute(query)
             return bool(result.rowcount)
@@ -70,7 +70,7 @@ class Database:
         query = self.table.update()
         for k, v in filter.items():
             query = query.where(getattr(self.table.c, k) == v)
-        query = query.values(**(obj.serialise()))
+        query = query.values(obj.serialise())
         with self.engine.connect() as conn:
             result = conn.execute(query)
             return bool(result.rowcount)

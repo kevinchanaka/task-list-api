@@ -1,16 +1,9 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify
 from api.services import task_service
-from api.decorators import login_required, validator_new
-
-# from api.config import NAME_LENGTH, DEFAULT_LENGTH
+from api.decorators import login_required, validator
 from api.models import Task
 
 bp = Blueprint("tasks", __name__, url_prefix="/api/v1/tasks")
-
-# task_schema = {
-#     "name": {"type": "string", "required": True, "maxlength": NAME_LENGTH},
-#     "description": {"type": "string", "required": True, "maxlength": DEFAULT_LENGTH},
-# }
 
 
 @bp.route("/", methods=["GET"])
@@ -28,20 +21,18 @@ def get(user_id, id):
 
 @bp.route("/", methods=["POST"])
 @login_required
-@validator_new(Task.validate)
-def create(payload, user_id):
-    data = request.get_json()
-    task_obj = Task.deserialise(user_id=user_id, **data)
+@validator(Task)
+def create(user_id, payload):
+    task_obj = Task.deserialise(user_id=user_id, **payload)
     task = task_service.create_task(task_obj)
     return jsonify(task)
 
 
 @bp.route("/<id>", methods=["PUT"])
 @login_required
-@validator_new(Task.validate)
+@validator(Task)
 def update(user_id, id, payload):
-    data = request.get_json()
-    task_obj = Task.deserialise(user_id=user_id, id=id, **data)
+    task_obj = Task.deserialise(user_id=user_id, id=id, **payload)
     task = task_service.update_task(task_obj)
     return jsonify(task)
 

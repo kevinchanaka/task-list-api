@@ -1,37 +1,37 @@
 from dataclasses import dataclass
-from marshmallow import Schema, fields, post_dump, validate
+from typing import Optional
+from marshmallow import Schema, fields, validate
 import uuid
 from api.config import NAME_LENGTH, DEFAULT_LENGTH
 
 
 class Model:
-    _schema: Schema
-    _schema_public: Schema
-    _validator: Schema
-
-    def serialise(self):
-        return self._schema.dump(self)
-
-    def serialise_public(self):
-        return self._schema_public.dump(self)
+    _schema_validator: Schema  # Validate data provided by user
+    _schema_client: Schema  # Serialise/deserialise to and from users
+    _schema_database: Schema  # Serialise/deserialise data to and from DB
 
     @classmethod
-    def validate(cls, **data):
-        return cls._validator.validate(data)
+    def deserialise_public(cls, **data):
+        dict_data = cls._schema_client.load(data)
+        return cls(**dict_data)
+
+    def serialise_public(self):
+        return self._schema_client.dump(self)
 
     @classmethod
     def deserialise(cls, **data):
-        serialised_data = cls._schema.load(data)
-        return cls(**serialised_data)
+        dict_data = cls._schema_database.load(data)
+        return cls(**dict_data)
+
+    def serialise(self):
+        return self._schema_database.dump(self)
+
+    @classmethod
+    def validate(cls, data):
+        return cls._schema_validator.validate(data)
 
 
-class BaseSchema(Schema):
-    @post_dump
-    def remove_null_values(self, data, **kwargs):
-        return {key: value for key, value in data.items() if value is not None}
-
-
-class TaskSchema(BaseSchema):
+class TaskSchema(Schema):
     id = fields.UUID(load_default=uuid.uuid4)
     name = fields.Str(required=True, validate=validate.Length(min=1, max=NAME_LENGTH))
     description = fields.Str(
@@ -47,9 +47,9 @@ class Task(Model):
     description: str
     user_id: str
 
-    _schema = TaskSchema()
-    _schema_public = TaskSchema(exclude=("user_id",))
-    _validator = TaskSchema(exclude=("id", "user_id"))
+    _schema_client = TaskSchema(exclude=("user_id",))
+    _schema_database = TaskSchema()
+    _schema_validator = TaskSchema(exclude=("id", "user_id"))
 
 
 class TokenSchema(Schema):
@@ -62,19 +62,19 @@ class Token(Model):
     token: str
     expiry: int
 
-    _schema = TokenSchema()
+    _schema_database = TokenSchema()
 
 
-class UserSchema(BaseSchema):
+class UserSchema(Schema):
     id = fields.UUID(load_default=uuid.uuid4)
     name = fields.Str(required=True, validate=validate.Length(min=1, max=NAME_LENGTH))
     email = fields.Email(
         required=True, validate=validate.Length(min=1, max=NAME_LENGTH)
     )
     password = fields.Str(
-        load_default=None, validate=validate.Length(min=1, max=NAME_LENGTH)
+        required=True, validate=validate.Length(min=1, max=NAME_LENGTH)
     )
-    password_hash = fields.Str(load_default=None)
+    password_hash = fields.Str(required=True)
 
 
 @dataclass
@@ -82,15 +82,14 @@ class User(Model):
     id: str
     name: str
     email: str
-    password: str
-    password_hash: str
+    password: Optional[str] = None
+    password_hash: Optional[str] = None
 
-    _schema = UserSchema()
-    _schema_public = UserSchema(exclude=("password", "password_hash"))
+    _schema_validator = UserSchema(exclude=("id", "password_hash"))
+    _schema_client = UserSchema(exclude=("password_hash",), load_only=("password",))
+    _schema_database = UserSchema(exclude=("password",))
 
 
-# NOTE: Need 4 schemas here:
-# user input schema, database schema, user output schema and validation schema
-# most of the time user output schema equals user input
-# Additional validation schema needed to stop certain fields from being passed in
-# (e.g. "id")
+@dataclass
+class UserLogin(Model):
+    _schema_validator = UserSchema(exclude=("id", "name", "password_hash"))
