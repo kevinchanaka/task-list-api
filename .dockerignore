@@ -1,6 +1,5 @@
 .env
-test
-node_modules
+tests
 README.md
 deploy
 migrations

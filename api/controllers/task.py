@@ -28,6 +28,7 @@ def create(user_id, payload):
     return jsonify(task)
 
 
+# BUG: can pass invalid task ID that skips validation
 @bp.route("/<id>", methods=["PUT"])
 @login_required
 @validator(Task)
