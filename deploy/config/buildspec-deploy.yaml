@@ -7,7 +7,8 @@ phases:
       - CLUSTER_VERSION=`aws eks describe-cluster --name ${EKS_CLUSTER_NAME} | jq -r .cluster.version`
       - KUBECTL_VERSION=${CLUSTER_VERSION}.0-00
       - echo "Installing required tools"
-      - npm install knex
+      - pip install pipenv
+      - pipenv install --dev
       - apt-get update
       - apt-get install -y apt-transport-https ca-certificates curl
       - curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
@@ -18,8 +19,8 @@ phases:
   pre_build:
     commands:
       - echo "Running DB migrations"
-      - npm run -s dbInit
-      - npx knex --esm migrate:latest
+      - pipenv run bootstrap
+      - pipenv run migrate
   build:
     commands:
       - echo "Setting variables"

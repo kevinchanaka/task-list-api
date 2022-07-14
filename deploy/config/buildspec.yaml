@@ -1,16 +1,17 @@
 version: 0.2
-       
+
 phases:
   install:
     commands:
-      - echo "Installing npm packages"
-      - npm install
+      - echo "Installing packages"
+      - pip install pipenv
+      - pipenv install --dev
   pre_build:
     commands:
       - echo "Running test cases"
-      - make
-      - npm test
-      - npm run -s integration
+      - make db
+      - make unit-test
+      - make integration-test
   build:
     commands:
       - echo "Building docker image and pushing to ECR"
@@ -23,7 +24,6 @@ phases:
     commands:
       - echo "Cleaning up environment"
       - make clean
-      - rm -rf node_modules
 
 artifacts:
   files:

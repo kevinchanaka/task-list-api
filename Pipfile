@@ -1,0 +1,30 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+flask = "*"
+sqlalchemy = "*"
+marshmallow = "*"
+python-dotenv = "*"
+mysqlclient = "*"
+pyjwt = "*"
+gunicorn = "*"
+
+[dev-packages]
+flake8 = "*"
+mypy = "*"
+alembic = "*"
+pymysql = "*"
+black = "*"
+cryptography = "*"
+
+[requires]
+python_version = "3.9"
+
+[scripts]
+migrate = "alembic --config migrations/alembic.ini upgrade head"
+bootstrap = "python -m migrations.bootstrap"
+app-dev = "flask run"
+app-prod = "gunicorn -w 4 app:app"

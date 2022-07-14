@@ -73,7 +73,7 @@ spec:
             name: task-list-api-secrets
             optional: false
         ports:
-        - containerPort: 3000
+        - containerPort: 8000
         lifecycle:
           preStop:
             exec:
@@ -90,9 +90,9 @@ metadata:
   name: task-list-api
 spec:
   ports:
-    - port: 3000
-      targetPort: 3000
-      protocol: TCP
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
   type: ClusterIP
   selector:
     app: task-list-api
@@ -126,4 +126,4 @@ spec:
           service:
             name: task-list-api
             port:
-              number: 3000
+              number: 8000

@@ -1,5 +1,5 @@
 -include .env
-.PHONY: all db build app start stop clean
+.PHONY: all db build app start stop unit-test integration-test clean
 
 network=task-list
 db_dev=db-task-list-dev
@@ -24,10 +24,10 @@ db : .env
 	  -p 33062:3306 \
 	  mysql:8
 	sleep 60
-	npm run -s dbInit
-	NODE_ENV=test npm run -s dbInit
-	npx knex --esm --env development migrate:latest
-	npx knex --esm --env test migrate:latest
+	pipenv run bootstrap
+	ENV=test pipenv run bootstrap
+	pipenv run migrate
+	ENV=test pipenv run migrate
 
 build :
 	docker build -t ${app} .
@@ -40,7 +40,9 @@ app : .env
 	  -e DB_PORT=3306 \
 	  -e DB_USER=${DB_USER} \
 	  -e DB_PASSWORD=${DB_PASSWORD} \
-	  -p 3000:3000 \
+	  -e ACCESS_TOKEN_SECRET=${ACCESS_TOKEN_SECRET} \
+	  -e REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET} \
+	  -p 5000:8000 \
 	  ${app}
 
 start :
@@ -48,6 +50,12 @@ start :
 
 stop :
 	-docker stop ${db_dev} ${db_test} ${app}
+
+unit-test :
+	ENV=test pipenv run python -m unittest -v tests/unit/test_*.py
+
+integration-test :
+	ENV=test pipenv run python -m unittest -v tests/integration/test_*.py
 
 clean : stop
 	-docker rm ${db_dev} ${db_test} ${app}
