@@ -2,10 +2,10 @@ from unittest import TestCase, mock
 from tests.unit import MockDatabase
 from tests.data import test_task
 from api.services import task_service
-from api.models import Task
+from api.models import Task, task_create_schema
 from api.exceptions import InvalidUsageError
 
-task_obj = Task.deserialise(**test_task)
+task_obj = Task.load(task_create_schema, **test_task)
 
 
 class TestTaskService(TestCase):

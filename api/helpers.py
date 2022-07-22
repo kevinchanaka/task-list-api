@@ -1,25 +1,9 @@
+# File used for various helper methods, including decorators
+
 import functools
 from flask import request
 from api.services.token import token_service
-from api.exceptions import ValidationError, NotLoggedInError
-from api.models import Model
-
-
-def validator(model: Model):
-    def validator_decorator(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            payload = request.get_json()
-            errors = model.validate(payload)
-            if errors:
-                print(errors)
-                raise ValidationError
-            else:
-                return func(payload=payload, *args, **kwargs)
-
-        return wrapper
-
-    return validator_decorator
+from api.exceptions import NotLoggedInError
 
 
 def refresh_token_required(func):

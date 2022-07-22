@@ -1,16 +1,28 @@
 import sqlalchemy as db
 from api.config import DB_CONNECTION_STRING
-from api.models import Model, Task, Token, User
+from api.models import (
+    Model,
+    Task,
+    Token,
+    User,
+    task_schema,
+    user_schema,
+    token_schema,
+)
+from marshmallow import Schema
 
 engine = db.create_engine(DB_CONNECTION_STRING)
 
 
 class Database:
-    def __init__(self, table_name: str, engine: db.engine.Engine, model: Model):
+    def __init__(
+        self, table_name: str, engine: db.engine.Engine, model: Model, schema: Schema
+    ):
         metadata = db.MetaData()
         self.engine = engine
         self.table = db.Table(table_name, metadata, autoload=True, autoload_with=engine)
         self.model = model
+        self.schema = schema
 
     def list(self, **filter):
         """
@@ -22,7 +34,7 @@ class Database:
             query = query.where(getattr(self.table.c, k) == v)
         with self.engine.connect() as conn:
             result = conn.execute(query).mappings().all()
-            return [self.model.deserialise(**r) for r in result]
+            return [self.model.load(self.schema, **r) for r in result]
 
     def get(self, **filter):
         """
@@ -36,14 +48,14 @@ class Database:
             result = conn.execute(query).mappings().first()
             if result is None:
                 return None
-            return self.model.deserialise(**result)
+            return self.model.load(self.schema, **result)
 
     def add(self, obj: Model):
         """
         Populates additional data to dictionary
         Returns True if add was successful, False otherwise
         """
-        query = self.table.insert().values(obj.serialise())
+        query = self.table.insert().values(obj.dump(self.schema))
         with self.engine.connect() as conn:
             result = conn.execute(query)
             return bool(result.rowcount)
@@ -70,12 +82,14 @@ class Database:
         query = self.table.update()
         for k, v in filter.items():
             query = query.where(getattr(self.table.c, k) == v)
-        query = query.values(obj.serialise())
+        query = query.values(obj.dump(self.schema))
         with self.engine.connect() as conn:
             result = conn.execute(query)
             return bool(result.rowcount)
 
 
-task_db = Database(table_name="tasks", engine=engine, model=Task)
-user_db = Database(table_name="users", engine=engine, model=User)
-token_db = Database(table_name="refresh_tokens", engine=engine, model=Token)
+task_db = Database(table_name="tasks", engine=engine, model=Task, schema=task_schema)
+user_db = Database(table_name="users", engine=engine, model=User, schema=user_schema)
+token_db = Database(
+    table_name="refresh_tokens", engine=engine, model=Token, schema=token_schema
+)

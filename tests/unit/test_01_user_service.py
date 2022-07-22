@@ -2,7 +2,7 @@ from unittest import TestCase, mock
 from tests.unit import MockDatabase
 from tests.data import test_user
 from api.services import user_service
-from api.models import User
+from api.models import User, user_register_schema
 
 
 class TestUserService(TestCase):
@@ -15,7 +15,7 @@ class TestUserService(TestCase):
         )
         self.user_db = self.user_db_mock.start()
         self.token_db = self.token_db_mock.start()
-        self.test_user_obj = User.deserialise_public(**test_user)
+        self.test_user_obj = User.load(user_register_schema, **test_user)
 
     def tearDown(self):
         self.user_db_mock.stop()

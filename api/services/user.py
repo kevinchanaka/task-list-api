@@ -1,8 +1,9 @@
+import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
 from api.database import user_db
 from api.services.token import token_service
 from api.exceptions import InvalidUsageError
-from api.models import User
+from api.models import User, user_output_schema
 
 
 class UserService:
@@ -11,10 +12,11 @@ class UserService:
         if exists:
             raise InvalidUsageError("User already registered")
 
+        user.id = uuid.uuid4()
         user.password_hash = generate_password_hash(user.password)
         user.password = None
         user_db.add(user)
-        return {"user": user.serialise_public(), "message": "User registered"}
+        return {"user": user.dump(user_output_schema), "message": "User registered"}
 
     def login_user(self, email: str, password: str):
         user: User = user_db.get(email=email)
@@ -23,7 +25,7 @@ class UserService:
 
         access_token = token_service.generate_access_token(str(user.id))
         refresh_token = token_service.generate_refresh_token(str(user.id))
-        return {"user": user.serialise_public()}, access_token, refresh_token
+        return {"user": user.dump(user_output_schema)}, access_token, refresh_token
 
     def logout_user(self, token: str):
         if token:

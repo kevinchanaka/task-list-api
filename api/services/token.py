@@ -7,7 +7,7 @@ from api.config import (
     REFRESH_TOKEN_EXPIRY,
 )
 from api.database import token_db
-from api.models import Token
+from api.models import Token, token_schema
 from api.exceptions import InvalidTokenError
 
 
@@ -28,7 +28,7 @@ class TokenService:
             "exp": expiry,
         }
         token = jwt.encode(payload, REFRESH_TOKEN_SECRET, algorithm="HS256")
-        token_obj = Token.deserialise(token=token, expiry=expiry)
+        token_obj = Token.load(token_schema, token=token, expiry=expiry)
         token_db.add(token_obj)
         return token
 
