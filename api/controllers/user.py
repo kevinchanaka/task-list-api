@@ -13,7 +13,7 @@ bp = Blueprint("users", __name__, url_prefix="/api/v1/users")
 @bp.route("/register", methods=["POST"])
 def register():
     payload = request.get_json()
-    user_obj = User.load(user_register_schema, **payload)
+    user_obj = user_register_schema.load_validate(**payload)
     user = user_service.register_user(user_obj)
     return jsonify(user)
 
@@ -21,7 +21,7 @@ def register():
 @bp.route("/login", methods=["POST"])
 def login():
     payload = request.get_json()
-    user_obj: User = User.load(user_login_schema, **payload)
+    user_obj: User = user_login_schema.load_validate(**payload)
     user, access_token, refresh_token = user_service.login_user(
         user_obj.email, user_obj.password
     )

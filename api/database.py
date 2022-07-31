@@ -1,27 +1,20 @@
 import sqlalchemy as db
 from api.config import DB_CONNECTION_STRING
 from api.models import (
-    Model,
-    Task,
-    Token,
-    User,
+    BaseSchema,
     task_schema,
     user_schema,
     token_schema,
 )
-from marshmallow import Schema
 
 engine = db.create_engine(DB_CONNECTION_STRING)
 
 
 class Database:
-    def __init__(
-        self, table_name: str, engine: db.engine.Engine, model: Model, schema: Schema
-    ):
+    def __init__(self, table_name: str, engine: db.engine.Engine, schema: BaseSchema):
         metadata = db.MetaData()
         self.engine = engine
         self.table = db.Table(table_name, metadata, autoload=True, autoload_with=engine)
-        self.model = model
         self.schema = schema
 
     def list(self, **filter):
@@ -34,7 +27,7 @@ class Database:
             query = query.where(getattr(self.table.c, k) == v)
         with self.engine.connect() as conn:
             result = conn.execute(query).mappings().all()
-            return [self.model.load(self.schema, **r) for r in result]
+            return [self.schema.load(r) for r in result]
 
     def get(self, **filter):
         """
@@ -48,14 +41,14 @@ class Database:
             result = conn.execute(query).mappings().first()
             if result is None:
                 return None
-            return self.model.load(self.schema, **result)
+            return self.schema.load(result)
 
-    def add(self, obj: Model):
+    def add(self, obj):
         """
         Populates additional data to dictionary
         Returns True if add was successful, False otherwise
         """
-        query = self.table.insert().values(obj.dump(self.schema))
+        query = self.table.insert().values(self.schema.dump(obj))
         with self.engine.connect() as conn:
             result = conn.execute(query)
             return bool(result.rowcount)
@@ -74,7 +67,7 @@ class Database:
             result = conn.execute(query)
             return bool(result.rowcount)
 
-    def update(self, obj: Model, **filter):
+    def update(self, obj, **filter):
         """
         Updates record from DB based on match when compared to input dictionary
         Returns True if update was successful, False otherwise
@@ -82,14 +75,12 @@ class Database:
         query = self.table.update()
         for k, v in filter.items():
             query = query.where(getattr(self.table.c, k) == v)
-        query = query.values(obj.dump(self.schema))
+        query = query.values(self.schema.dump(obj))
         with self.engine.connect() as conn:
             result = conn.execute(query)
             return bool(result.rowcount)
 
 
-task_db = Database(table_name="tasks", engine=engine, model=Task, schema=task_schema)
-user_db = Database(table_name="users", engine=engine, model=User, schema=user_schema)
-token_db = Database(
-    table_name="refresh_tokens", engine=engine, model=Token, schema=token_schema
-)
+task_db = Database(table_name="tasks", engine=engine, schema=task_schema)
+user_db = Database(table_name="users", engine=engine, schema=user_schema)
+token_db = Database(table_name="refresh_tokens", engine=engine, schema=token_schema)

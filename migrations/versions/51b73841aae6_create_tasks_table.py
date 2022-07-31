@@ -24,6 +24,9 @@ def upgrade():
         sa.Column("id", sa.String(UUID_LENGTH), primary_key=True),
         sa.Column("name", sa.String(NAME_LENGTH), nullable=False),
         sa.Column("description", sa.String(DEFAULT_LENGTH), nullable=False),
+        sa.Column("completed", sa.Boolean(), nullable=False),
+        sa.Column("created_at", sa.DateTime(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(), nullable=False),
     )
 
 

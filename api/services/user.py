@@ -16,16 +16,24 @@ class UserService:
         user.password_hash = generate_password_hash(user.password)
         user.password = None
         user_db.add(user)
-        return {"user": user.dump(user_output_schema), "message": "User registered"}
+        return {
+            "user": user_output_schema.dump(user),
+            "message": "User registered",
+        }
 
     def login_user(self, email: str, password: str):
         user: User = user_db.get(email=email)
+        print(user)
         if not user or not check_password_hash(user.password_hash, password):
             raise InvalidUsageError("Email or password is incorrect")
 
         access_token = token_service.generate_access_token(str(user.id))
         refresh_token = token_service.generate_refresh_token(str(user.id))
-        return {"user": user.dump(user_output_schema)}, access_token, refresh_token
+        return (
+            {"user": user_output_schema.dump(user)},
+            access_token,
+            refresh_token,
+        )
 
     def logout_user(self, token: str):
         if token:

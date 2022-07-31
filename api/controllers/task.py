@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from api.services import task_service
 from api.helpers import login_required
-from api.models import Task, task_create_schema, task_update_schema
+from api.models import task_create_schema, task_update_schema
 
 bp = Blueprint("tasks", __name__, url_prefix="/api/v1/tasks")
 
@@ -23,7 +23,7 @@ def get(user_id, id):
 @login_required
 def create(user_id):
     payload = request.get_json()
-    task_obj = Task.load(task_create_schema, user_id=user_id, **payload)
+    task_obj = task_create_schema.load_validate(user_id=user_id, **payload)
     task = task_service.create_task(task_obj)
     return jsonify(task)
 
@@ -32,7 +32,7 @@ def create(user_id):
 @login_required
 def update(user_id, id):
     payload = request.get_json()
-    task_obj = Task.load(task_update_schema, user_id=user_id, id=id, **payload)
+    task_obj = task_update_schema.load_validate(user_id=user_id, id=id, **payload)
     task = task_service.update_task(task_obj)
     return jsonify(task)
 
