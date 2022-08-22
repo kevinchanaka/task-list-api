@@ -34,7 +34,7 @@ class TestTask(TestCase):
 
     def test_03_update_task(self):
         task_id = self.task["id"]
-        modified_task = {"name": "task2", "description": "desc2"}
+        modified_task = {"name": "task2", "description": "desc2", "completed": "true"}
         res = self.app.put(f"{PATH}/{task_id}", json=modified_task)
         self.assertEqual(res.status_code, 200)
         self.assertIsInstance(res.get_json()["task"], dict)

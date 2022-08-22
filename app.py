@@ -1,9 +1,10 @@
 from flask import Flask, jsonify
 from werkzeug.exceptions import HTTPException, InternalServerError
 from api.exceptions import InvalidUsageError
-from api.controllers.health import bp as bp_health
-from api.controllers.task import bp as bp_tasks
-from api.controllers.user import bp as bp_users
+from api.controllers.health_controller import bp as bp_health
+from api.controllers.task_controller import bp as bp_tasks
+from api.controllers.user_controller import bp as bp_users
+from api.controllers.label_controller import bp as bp_labels
 
 
 def init_app(testing=False):
@@ -16,6 +17,7 @@ def init_app(testing=False):
     app.register_blueprint(bp_health)
     app.register_blueprint(bp_tasks)
     app.register_blueprint(bp_users)
+    app.register_blueprint(bp_labels)
 
     # Generic HTTP error handler
     @app.errorhandler(HTTPException)

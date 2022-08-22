@@ -1,21 +1,14 @@
 import sqlalchemy as db
 from api.config import DB_CONNECTION_STRING
-from api.models import (
-    BaseSchema,
-    task_schema,
-    user_schema,
-    token_schema,
-)
 
+
+metadata = db.MetaData()
 engine = db.create_engine(DB_CONNECTION_STRING)
 
 
 class Database:
-    def __init__(self, table_name: str, engine: db.engine.Engine, schema: BaseSchema):
-        metadata = db.MetaData()
-        self.engine = engine
+    def __init__(self, table_name: str):
         self.table = db.Table(table_name, metadata, autoload=True, autoload_with=engine)
-        self.schema = schema
 
     def list(self, **filter):
         """
@@ -25,9 +18,30 @@ class Database:
         query = self.table.select()
         for k, v in filter.items():
             query = query.where(getattr(self.table.c, k) == v)
-        with self.engine.connect() as conn:
-            result = conn.execute(query).mappings().all()
-            return [self.schema.load(r) for r in result]
+        with engine.connect() as conn:
+            return conn.execute(query).mappings().all()
+
+    def list_or(self, field_name: str, field_values):
+        query = self.table.select().where(
+            getattr(self.table.c, field_name).in_(field_values)
+        )
+        with engine.connect() as conn:
+            return conn.execute(query).mappings().all()
+
+    def list_relationship(self, relation_name: str, id: str):
+        """
+        Lists records in mapping table, mainly intended for many-to-many relationships
+        These relationships are stored in the 'db_relationships' variable
+        """
+        relation = db_relationships[relation_name]
+        mapping_db = relation["mapping_db"]
+        filter_dict = {}
+        filter_dict[relation["local_field"]] = id
+        results = mapping_db.list(**filter_dict)  # type: ignore[attr-defined]
+        result_ids = [x[relation["relation_field"]] for x in results]
+        query = self.table.select().where(getattr(self.table.c, "id").in_(result_ids))
+        with engine.connect() as conn:
+            return conn.execute(query).mappings().all()
 
     def get(self, **filter):
         """
@@ -37,19 +51,16 @@ class Database:
         query = self.table.select()
         for k, v in filter.items():
             query = query.where(getattr(self.table.c, k) == v)
-        with self.engine.connect() as conn:
-            result = conn.execute(query).mappings().first()
-            if result is None:
-                return None
-            return self.schema.load(result)
+        with engine.connect() as conn:
+            return conn.execute(query).mappings().first()
 
-    def add(self, obj):
+    def add(self, data):
         """
         Populates additional data to dictionary
         Returns True if add was successful, False otherwise
         """
-        query = self.table.insert().values(self.schema.dump(obj))
-        with self.engine.connect() as conn:
+        query = self.table.insert().values(data)
+        with engine.connect() as conn:
             result = conn.execute(query)
             return bool(result.rowcount)
 
@@ -63,11 +74,11 @@ class Database:
         query = self.table.delete()
         for k, v in filter.items():
             query = query.where(getattr(self.table.c, k) == v)
-        with self.engine.connect() as conn:
+        with engine.connect() as conn:
             result = conn.execute(query)
             return bool(result.rowcount)
 
-    def update(self, obj, **filter):
+    def update(self, data, **filter):
         """
         Updates record from DB based on match when compared to input dictionary
         Returns True if update was successful, False otherwise
@@ -75,12 +86,23 @@ class Database:
         query = self.table.update()
         for k, v in filter.items():
             query = query.where(getattr(self.table.c, k) == v)
-        query = query.values(self.schema.dump(obj))
-        with self.engine.connect() as conn:
+        query = query.values(data)
+        with engine.connect() as conn:
             result = conn.execute(query)
             return bool(result.rowcount)
 
 
-task_db = Database(table_name="tasks", engine=engine, schema=task_schema)
-user_db = Database(table_name="users", engine=engine, schema=user_schema)
-token_db = Database(table_name="refresh_tokens", engine=engine, schema=token_schema)
+task_db = Database(table_name="tasks")
+user_db = Database(table_name="users")
+token_db = Database(table_name="refresh_tokens")
+label_db = Database(table_name="labels")
+task_label_db = Database(table_name="tasks_labels_mapping")
+
+db_relationships = {
+    "task_labels": {
+        "relation_db": label_db,
+        "mapping_db": task_label_db,
+        "local_field": "task_id",
+        "relation_field": "label_id",
+    }
+}
