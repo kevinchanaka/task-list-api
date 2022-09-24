@@ -1,44 +1,43 @@
 import uuid
 from datetime import datetime, timezone
-from api.database import label_db, task_label_db
 from api.exceptions import InvalidUsageError
-from api.schemas import label_schema, label_get_schema, label_list_schema
-from api.models import Label
+from api.models import Label, db
+from sqlalchemy import select
 
 
 def create_label(label: Label):
     label.id = uuid.uuid4()
     label.created_at = datetime.now(timezone.utc)
     label.updated_at = label.created_at
-    label_db.add(label_schema.dump(label))
-    created_label = label_db.get(user_id=label.user_id, id=label.id)
-    return label_get_schema.dump(created_label)
+    db.session.add(label)
+    db.session.commit()
 
 
-def get_label(user_id: str, label_id: str):
-    label = label_db.get(user_id=user_id, id=label_id)
+def get_label(user_id: str, label_id: str) -> Label:
+    query = select(Label).where(Label.id == label_id).where(Label.user_id == user_id)
+    label = db.session.execute(query).scalars().first()
     if not label:
         raise InvalidUsageError("Label not found")
-    return label_get_schema.dump(label)
+    return label
 
 
 def list_labels(user_id: str):
-    labels = label_db.list(user_id=user_id)
-    return [label_list_schema.dump(x) for x in labels]
+    query = select(Label).where(Label.user_id == user_id)
+    labels = db.session.execute(query).scalars().all()
+    return labels
 
 
 def delete_label(user_id: str, label_id: str):
-    get_label(user_id, label_id)
-    task_label_db.delete(label_id=label_id)
-    label_db.delete(user_id=user_id, id=label_id)
-    
+    # TODO: fix minor bug, label deletion does not change task update time
+    label = get_label(user_id, label_id)
+    db.session.delete(label)
+    db.session.commit()
 
-def update_label(label: Label):
+
+def update_label(user_id: str, label_id: str, data: dict) -> Label:
+    label = get_label(user_id, label_id)
+    for k, v in data.items():
+        setattr(label, k, v)
     label.updated_at = datetime.now(timezone.utc)
-    success = label_db.update(
-        label_schema.dump(label), user_id=label.user_id, id=label.id
-    )
-    if not success:
-        raise InvalidUsageError("Label not found")
-    updated_label = label_db.get(user_id=label.user_id, id=label.id)
-    return label_get_schema.dump(updated_label)
+    db.session.commit()
+    return label

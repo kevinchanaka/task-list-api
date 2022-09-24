@@ -6,8 +6,11 @@ from api.config import (
     ACCESS_TOKEN_EXPIRY,
     REFRESH_TOKEN_EXPIRY,
 )
-from api.database import token_db
+from api.models import Token, db
 from api.exceptions import InvalidTokenError
+from sqlalchemy import select
+
+# TODO: use Token model here
 
 
 def generate_access_token(user_id: str):
@@ -27,7 +30,9 @@ def generate_refresh_token(user_id: str):
         "exp": expiry,
     }
     token = jwt.encode(payload, REFRESH_TOKEN_SECRET, algorithm="HS256")
-    token_db.add({"token": token, "expiry": expiry})
+    token_obj = Token(token=token, expiry=expiry)
+    db.session.add(token_obj)
+    db.session.commit()
     return token
 
 
@@ -39,7 +44,7 @@ def verify_access_token(token: str):
 
 
 def verify_refresh_token(token: str):
-    if token_db.get(token=token):
+    if db.session.execute(select(Token).where(Token.token == token)).scalars().first():
         try:
             return jwt.decode(token, REFRESH_TOKEN_SECRET, algorithms=["HS256"])
         except jwt.exceptions.InvalidTokenError:
@@ -47,4 +52,8 @@ def verify_refresh_token(token: str):
 
 
 def delete_refresh_token(token: str):
-    token_db.delete(token=token)
+    query = select(Token).where(Token.token == token)
+    token = db.session.execute(query).scalars().first()
+    if token:
+        db.session.delete(token)
+        db.session.commit()

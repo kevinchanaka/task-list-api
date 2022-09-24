@@ -1,34 +1,36 @@
 import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
-from api.database import user_db
 from api.services import token_service
 from api.exceptions import InvalidUsageError
-from api.schemas import user_schema, user_output_schema
-from api.models import User
+from api.models import User, db
+from sqlalchemy import select
 
 
 def register_user(user: User):
-    exists = user_db.get(email=user.email)
-    if exists:
+    query = select(User).where(User.email == user.email)
+    result = db.session.execute(query).scalars().first()
+    if result:
         raise InvalidUsageError("User already registered")
 
     user.id = uuid.uuid4()
     user.password_hash = generate_password_hash(user.password)
     user.password = None
-    user_db.add(user_schema.dump(user))
-    return user_output_schema.dump(user)
+    db.session.add(user)
+    db.session.commit()
 
 
-def login_user(email: str, password: str):
-    user: User = user_db.get(email=email)
-
-    if not user or not check_password_hash(user.password_hash, password):
+def login_user(user: User):
+    query = select(User).where(User.email == user.email)
+    user_obj = db.session.execute(query).scalars().first()
+    if not user_obj or not check_password_hash(user_obj.password_hash, user.password):
         raise InvalidUsageError("Email or password is incorrect")
 
-    access_token = token_service.generate_access_token(str(user.id))
-    refresh_token = token_service.generate_refresh_token(str(user.id))
+    user.password = None
+
+    access_token = token_service.generate_access_token(str(user_obj.id))
+    refresh_token = token_service.generate_refresh_token(str(user_obj.id))
     return (
-        user_output_schema.dump(user),
+        user_obj,
         access_token,
         refresh_token,
     )

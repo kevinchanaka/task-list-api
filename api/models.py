@@ -1,39 +1,59 @@
-from dataclasses import dataclass
-from typing import Optional
-from datetime import datetime
+from sqlalchemy.orm import relationship
+from sqlalchemy import Column, ForeignKey, Table
+import sqlalchemy as sa
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
+
+task_label_mapping = Table(
+    "tasks_labels_mapping",
+    db.metadata,
+    Column("id", sa.Integer, primary_key=True, autoincrement=True),
+    Column("label_id", sa.String, ForeignKey("labels.id")),
+    Column("task_id", sa.String, ForeignKey("tasks.id")),
+)
 
 
-@dataclass
-class Task:
-    id: Optional[str] = None
-    name: Optional[str] = None
-    description: Optional[str] = None
-    user_id: Optional[str] = None
-    completed: Optional[bool] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+class Task(db.Model):
+    __tablename__ = "tasks"
+    id = Column(sa.Integer, primary_key=True)
+    name = Column(sa.String, nullable=False)
+    description = Column(sa.String, nullable=False)
+    user_id = Column(sa.String, ForeignKey("users.id"))
+    completed = Column(sa.Boolean, nullable=False)
+    created_at = Column(sa.String, nullable=False)
+    updated_at = Column(sa.String, nullable=False)
+
+    labels = relationship("Label", secondary=task_label_mapping, back_populates="tasks")
 
 
-@dataclass
-class Token:
-    token: str
-    expiry: int
+class Token(db.Model):
+    __tablename__ = "refresh_tokens"
+    token = Column(sa.String, primary_key=True)
+    expiry = Column(sa.String, nullable=False)
 
 
-@dataclass
-class User:
-    id: Optional[str] = None
-    name: Optional[str] = None
-    email: Optional[str] = None
-    password: Optional[str] = None
-    password_hash: Optional[str] = None
+class User(db.Model):
+    __tablename__ = "users"
+    id = Column(sa.String, primary_key=True)
+    name = Column(sa.String, nullable=False)
+    email = Column(sa.String, nullable=False)
+    password_hash = Column(sa.String, nullable=False)
+    password = None
+
+    tasks = relationship("Task")
+
+    def __repr__(self):
+        return f"User(id={self.id!r}, name={self.name!r}, email={self.email!r})"
 
 
-@dataclass
-class Label:
-    id: Optional[str] = None
-    name: Optional[str] = None
-    colour: Optional[str] = None
-    user_id: Optional[str] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+class Label(db.Model):
+    __tablename__ = "labels"
+    id = Column(sa.String, primary_key=True)
+    name = Column(sa.String, nullable=False)
+    colour = Column(sa.String, nullable=False)
+    user_id = Column(sa.String, ForeignKey("users.id"))
+    created_at = Column(sa.String, nullable=False)
+    updated_at = Column(sa.String, nullable=False)
+
+    tasks = relationship("Task", secondary=task_label_mapping, back_populates="labels")

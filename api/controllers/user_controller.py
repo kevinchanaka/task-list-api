@@ -5,28 +5,33 @@ from api.config import (
     ACCESS_TOKEN_EXPIRY,
     REFRESH_TOKEN_EXPIRY,
 )
-from api.schemas import user_login_schema, user_register_schema
-from api.models import User
+from api.schemas import UserSchema
 
 bp = Blueprint("users", __name__, url_prefix="/api/v1/users")
+
+user_register_schema = UserSchema(
+    exclude=("password_hash", "id"), load_only=("password",)
+)
+user_login_schema = UserSchema(exclude=("id", "name", "password_hash"))
+user_output_schema = UserSchema(exclude=("password_hash", "password"))
 
 
 @bp.route("/register", methods=["POST"])
 def register():
     payload = request.get_json()
-    user_obj = user_register_schema.load_validate(**payload)
-    user = user_service.register_user(user_obj)
-    return jsonify({"user": user, "message": "User registered"})
+    user = user_register_schema.load_validate(**payload)
+    user_service.register_user(user)
+    return jsonify(
+        {"user": user_output_schema.dump(user), "message": "User registered"}
+    )
 
 
 @bp.route("/login", methods=["POST"])
 def login():
     payload = request.get_json()
-    user_obj: User = user_login_schema.load_validate(**payload)
-    user, access_token, refresh_token = user_service.login_user(
-        user_obj.email, user_obj.password
-    )
-    res = make_response({"user": user})
+    user = user_login_schema.load_validate(**payload)
+    user, access_token, refresh_token = user_service.login_user(user)
+    res = make_response({"user": user_output_schema.dump(user)})
     res.set_cookie(
         "access_token",
         access_token,
