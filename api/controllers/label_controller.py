@@ -28,7 +28,7 @@ def get(user_id, id):
 @login_required
 def create(user_id):
     payload = request.get_json()
-    label = label_create_schema.load_validate(user_id=user_id, **payload)
+    label = label_create_schema.load_validate(userId=user_id, **payload)
     label_service.create_label(label)
     return jsonify({"label": label_get_schema.dump(label), "message": "Label added"})
 
@@ -37,7 +37,7 @@ def create(user_id):
 @login_required
 def update(user_id, id):
     payload = request.get_json()
-    label_update_schema.load_validate(user_id=user_id, id=id, **payload)
+    label_update_schema.load_validate(userId=user_id, id=id, **payload)
     label = label_service.update_label(user_id, id, payload)
     return jsonify({"label": label_get_schema.dump(label), "message": "Label modified"})
 

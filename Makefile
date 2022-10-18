@@ -51,11 +51,8 @@ start :
 stop :
 	-docker stop ${db_dev} ${db_test} ${app}
 
-unit-test :
-	ENV=test pipenv run python -m unittest -v tests/unit/test_*.py
-
-integration-test :
-	ENV=test pipenv run python -m unittest -v tests/integration/test_*.py
+test :
+	ENV=test pipenv run python -m unittest -v tests/*_test_*.py
 
 clean : stop
 	-docker rm ${db_dev} ${db_test} ${app}

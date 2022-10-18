@@ -40,3 +40,21 @@ ACCESS_TOKEN_SECRET = os.getenv("ACCESS_TOKEN_SECRET")
 ACCESS_TOKEN_EXPIRY = timedelta(minutes=5)
 REFRESH_TOKEN_SECRET = os.getenv("REFRESH_TOKEN_SECRET")
 REFRESH_TOKEN_EXPIRY = timedelta(days=1)
+
+LOGGING_CONFIG = {
+    "version": 1,
+    "formatters": {
+        "default": {
+            "format": "%(asctime)s %(levelname)-8s "
+            + "[%(name)s:%(filename)s:%(lineno)d] %(message)s"
+        }
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "level": "DEBUG",
+            "formatter": "default",
+        }
+    },
+    "loggers": {"": {"level": "DEBUG", "handlers": ["console"]}},
+}

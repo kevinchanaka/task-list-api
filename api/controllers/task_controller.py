@@ -29,7 +29,7 @@ def get(user_id, id):
 @login_required
 def create(user_id):
     payload = request.get_json()
-    task = task_create_schema.load_validate(user_id=user_id, **payload)
+    task = task_create_schema.load_validate(userId=user_id, **payload)
     task_service.create_task(task)
     return jsonify({"task": task_get_schema.dump(task), "message": "Task added"})
 
@@ -38,7 +38,7 @@ def create(user_id):
 @login_required
 def update(user_id, id):
     payload = request.get_json()
-    task_obj = task_update_schema.load_validate(user_id=user_id, id=id, **payload)
+    task_obj = task_update_schema.load_validate(userId=user_id, id=id, **payload)
     task = task_service.update_task(task_obj.user_id, task_obj.id, payload)
     return jsonify({"task": task_get_schema.dump(task), "message": "Task modified"})
 
@@ -54,7 +54,7 @@ def delete(user_id, id):
 @login_required
 def attach(user_id, id):
     payload = request.get_json()
-    task_service.attach_label_to_task(user_id, payload["label_id"], id)
+    task_service.attach_label_to_task(user_id, payload["labelId"], id)
     return jsonify({"message": "Attached label to task"})
 
 
@@ -62,5 +62,5 @@ def attach(user_id, id):
 @login_required
 def detach(user_id, id):
     payload = request.get_json()
-    task_service.detach_label_from_task(user_id, payload["label_id"], id)
+    task_service.detach_label_from_task(user_id, payload["labelId"], id)
     return jsonify({"message": "Detached label from task"})
