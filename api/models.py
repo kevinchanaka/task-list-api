@@ -1,113 +1,59 @@
-from dataclasses import dataclass
-from typing import Callable, Optional
-from datetime import datetime
-from marshmallow import Schema, fields, validate, post_dump, post_load, exceptions
-from api.config import NAME_LENGTH, DEFAULT_LENGTH
-from api.exceptions import ValidationError
+from sqlalchemy.orm import relationship
+from sqlalchemy import Column, ForeignKey, Table
+import sqlalchemy as sa
+from flask_sqlalchemy import SQLAlchemy
 
-# Creating this custom field as a workaround,
-# as SQLAlchemy returns timestamp fields as formatted datetime objects
-# Should ideally implement this with SQLAlchemy custom fields
+db = SQLAlchemy()
 
-
-class CustomDateTimeField(fields.DateTime):
-    def _deserialize(self, value, attr, data, **kwargs):
-        if isinstance(value, datetime):
-            return value
-        return super()._deserialize(value, attr, data, **kwargs)
-
-
-class BaseSchema(Schema):
-    _model: Callable
-
-    @post_load
-    def convert_to_dataclass(self, data, many, **kwargs):
-        return self._model(**data)
-
-    @post_dump
-    def remove_none_fields(self, data, many, **kwargs):
-        return {x: data[x] for x in data if data[x] is not None}
-
-    def load_validate(self, **dict_data):
-        try:
-            data = self.load(dict_data)
-        except exceptions.ValidationError as e:
-            print(e)
-            raise ValidationError
-        return data
-
-
-@dataclass
-class Task:
-    id: Optional[str] = None
-    name: Optional[str] = None
-    description: Optional[str] = None
-    user_id: Optional[str] = None
-    completed: Optional[bool] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-
-
-class TaskSchema(BaseSchema):
-    id = fields.UUID(required=True)
-    name = fields.Str(required=True, validate=validate.Length(min=1, max=NAME_LENGTH))
-    description = fields.Str(
-        required=True, validate=validate.Length(min=1, max=DEFAULT_LENGTH)
-    )
-    user_id = fields.UUID(required=True)
-    completed = fields.Boolean(required=True)
-    created_at = CustomDateTimeField()
-    updated_at = CustomDateTimeField()
-
-    _model = Task
-
-
-@dataclass
-class Token:
-    token: str
-    expiry: int
-
-
-class TokenSchema(BaseSchema):
-    token = fields.Str()
-    expiry = fields.Int()
-
-    _model = Token
-
-
-@dataclass
-class User:
-    id: Optional[str] = None
-    name: Optional[str] = None
-    email: Optional[str] = None
-    password: Optional[str] = None
-    password_hash: Optional[str] = None
-
-
-class UserSchema(BaseSchema):
-    id = fields.UUID(required=True)
-    name = fields.Str(required=True, validate=validate.Length(min=1, max=NAME_LENGTH))
-    email = fields.Email(
-        required=True, validate=validate.Length(min=1, max=NAME_LENGTH)
-    )
-    password = fields.Str(
-        required=True, validate=validate.Length(min=1, max=NAME_LENGTH)
-    )
-    password_hash = fields.Str(required=True)
-
-    _model = User
-
-
-task_schema = TaskSchema()
-task_create_schema = TaskSchema(exclude=("completed", "created_at", "updated_at", "id"))
-task_update_schema = TaskSchema(exclude=("created_at", "updated_at"))
-task_output_schema = TaskSchema(exclude=("user_id",))
-
-token_schema = TokenSchema()
-
-user_schema = UserSchema(exclude=("password",))
-user_register_schema = UserSchema(
-    exclude=("password_hash", "id"), load_only=("password",)
+tasks_labels_map = Table(
+    "tasks_labels_map",
+    db.metadata,
+    Column("id", sa.Integer, primary_key=True, autoincrement=True),
+    Column("label_id", sa.String, ForeignKey("labels.id")),
+    Column("task_id", sa.String, ForeignKey("tasks.id")),
 )
-user_login_schema = UserSchema(exclude=("id", "name", "password_hash"))
-user_output_schema = UserSchema(exclude=("password_hash", "password"))
+
+
+class Task(db.Model):
+    __tablename__ = "tasks"
+    id = Column(sa.Integer, primary_key=True)
+    name = Column(sa.String, nullable=False)
+    description = Column(sa.String, nullable=False)
+    user_id = Column(sa.String, ForeignKey("users.id"))
+    completed = Column(sa.Boolean, nullable=False)
+    created_at = Column(sa.String, nullable=False)
+    updated_at = Column(sa.String, nullable=False)
+
+    labels = relationship("Label", secondary=tasks_labels_map, back_populates="tasks")
+
+
+class Token(db.Model):
+    __tablename__ = "refresh_tokens"
+    token = Column(sa.String, primary_key=True)
+    expiry = Column(sa.String, nullable=False)
+
+
+class User(db.Model):
+    __tablename__ = "users"
+    id = Column(sa.String, primary_key=True)
+    name = Column(sa.String, nullable=False)
+    email = Column(sa.String, nullable=False)
+    password_hash = Column(sa.String, nullable=False)
+    password = None
+
+    tasks = relationship("Task")
+
+    def __repr__(self):
+        return f"User(id={self.id!r}, name={self.name!r}, email={self.email!r})"
+
+
+class Label(db.Model):
+    __tablename__ = "labels"
+    id = Column(sa.String, primary_key=True)
+    name = Column(sa.String, nullable=False)
+    colour = Column(sa.String, nullable=False)
+    user_id = Column(sa.String, ForeignKey("users.id"))
+    created_at = Column(sa.String, nullable=False)
+    updated_at = Column(sa.String, nullable=False)
+
+    tasks = relationship("Task", secondary=tasks_labels_map, back_populates="labels")

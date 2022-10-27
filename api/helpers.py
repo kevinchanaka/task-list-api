@@ -2,7 +2,7 @@
 
 import functools
 from flask import request
-from api.services.token import token_service
+from api.services import token_service
 from api.exceptions import NotLoggedInError
 
 
@@ -24,7 +24,6 @@ def login_required(func):
         access_token = request.cookies.get("access_token")
         if not access_token:
             raise NotLoggedInError
-
         payload = token_service.verify_access_token(access_token)
         user_id: str = payload["user_id"]
         return func(user_id=user_id, *args, **kwargs)

@@ -33,7 +33,7 @@ def upgrade():
     )
 
     op.add_column("tasks", sa.Column("user_id", sa.String(UUID_LENGTH), nullable=False))
-    op.create_foreign_key("fk_user_id", "tasks", "users", ["user_id"], ["id"])
+    op.create_foreign_key("fk_tasks_user_id", "tasks", "users", ["user_id"], ["id"])
 
     op.create_table(
         "refresh_tokens",
@@ -43,7 +43,7 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_constraint("fk_user_id", "tasks", type_="foreignkey")
+    op.drop_constraint("fk_tasks_user_id", "tasks", type_="foreignkey")
     op.drop_column("tasks", "user_id")
     op.drop_table("refresh_tokens")
     op.drop_table("users")
