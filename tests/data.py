@@ -7,4 +7,4 @@ test_task = {
 
 test_label = {"name": "test-label-2", "colour": "#ffffef"}
 
-tables = ["tasks_labels_mapping", "labels", "tasks", "users"]
+tables = ["tasks_labels_map", "labels", "tasks", "users"]

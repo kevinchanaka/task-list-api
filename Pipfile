@@ -8,21 +8,19 @@ flask = "*"
 sqlalchemy = "*"
 marshmallow = "*"
 python-dotenv = "*"
-mysqlclient = "*"
 pyjwt = "*"
 gunicorn = "*"
 flask-sqlalchemy = "*"
+mysqlclient = "*"
 
 [dev-packages]
 flake8 = "*"
 mypy = "*"
 alembic = "*"
-pymysql = "*"
 black = "*"
-cryptography = "*"
 
 [requires]
-python_version = "3.9"
+python_version = "3.10"
 
 [scripts]
 migrate = "alembic --config migrations/alembic.ini upgrade head"

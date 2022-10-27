@@ -30,22 +30,30 @@ def upgrade():
     op.create_foreign_key("fk_labels_user_id", "labels", "users", ["user_id"], ["id"])
 
     op.create_table(
-        "tasks_labels_mapping",
+        "tasks_labels_map",
         sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
         sa.Column("label_id", sa.String(UUID_LENGTH), nullable=False),
         sa.Column("task_id", sa.String(UUID_LENGTH), nullable=False),
     )
     op.create_foreign_key(
-        "fk_label_id", "tasks_labels_mapping", "labels", ["label_id"], ["id"]
+        "fk_tasks_labels_map_label_id",
+        "tasks_labels_map",
+        "labels",
+        ["label_id"],
+        ["id"],
     )
     op.create_foreign_key(
-        "fk_task_id", "tasks_labels_mapping", "tasks", ["task_id"], ["id"]
+        "fk_tasks_labels_map_task_id", "tasks_labels_map", "tasks", ["task_id"], ["id"]
     )
 
 
 def downgrade():
-    op.drop_constraint("fk_task_id", "tasks_labels_mapping", type_="foreignkey")
-    op.drop_constraint("fk_label_id", "tasks_labels_mapping", type_="foreignkey")
+    op.drop_constraint(
+        "fk_tasks_labels_map_task_id", "tasks_labels_map", type_="foreignkey"
+    )
+    op.drop_constraint(
+        "fk_tasks_labels_map_label_id", "tasks_labels_map", type_="foreignkey"
+    )
     op.drop_constraint("fk_labels_user_id", "labels", type_="foreignkey")
-    op.drop_table("tasks_labels_mapping")
+    op.drop_table("tasks_labels_map")
     op.drop_table("labels")

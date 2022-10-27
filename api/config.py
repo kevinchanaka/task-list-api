@@ -25,16 +25,18 @@ DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
-DB_CONNECTION_STRING = "mysql://{}:{}@{}:{}/{}".format(
-    DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
+DB_ADMIN_USER = os.getenv("DB_ADMIN_USER")
+DB_ADMIN_PASSWORD = os.getenv("DB_ADMIN_PASSWORD")
+
+DB_CONNECTION_STRING = f"mysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+
+DB_ADMIN_CONNECTION_STRING = (
+    f"mysql://{DB_ADMIN_USER}:{DB_ADMIN_PASSWORD}@{DB_HOST}:{DB_PORT}"
 )
 
 SQLALCHEMY_ENGINE_STRING = "mysql+pymysql://{}:{}@{}:{}/{}".format(
     DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
 )
-
-DB_ADMIN_USER = os.getenv("DB_ADMIN_USER")
-DB_ADMIN_PASSWORD = os.getenv("DB_ADMIN_PASSWORD")
 
 ACCESS_TOKEN_SECRET = os.getenv("ACCESS_TOKEN_SECRET")
 ACCESS_TOKEN_EXPIRY = timedelta(minutes=5)

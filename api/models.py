@@ -5,8 +5,8 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
-task_label_mapping = Table(
-    "tasks_labels_mapping",
+tasks_labels_map = Table(
+    "tasks_labels_map",
     db.metadata,
     Column("id", sa.Integer, primary_key=True, autoincrement=True),
     Column("label_id", sa.String, ForeignKey("labels.id")),
@@ -24,7 +24,7 @@ class Task(db.Model):
     created_at = Column(sa.String, nullable=False)
     updated_at = Column(sa.String, nullable=False)
 
-    labels = relationship("Label", secondary=task_label_mapping, back_populates="tasks")
+    labels = relationship("Label", secondary=tasks_labels_map, back_populates="tasks")
 
 
 class Token(db.Model):
@@ -56,4 +56,4 @@ class Label(db.Model):
     created_at = Column(sa.String, nullable=False)
     updated_at = Column(sa.String, nullable=False)
 
-    tasks = relationship("Task", secondary=task_label_mapping, back_populates="labels")
+    tasks = relationship("Task", secondary=tasks_labels_map, back_populates="labels")

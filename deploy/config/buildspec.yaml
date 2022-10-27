@@ -10,8 +10,7 @@ phases:
     commands:
       - echo "Running test cases"
       - make db
-      - make unit-test
-      - make integration-test
+      - make test
   build:
     commands:
       - echo "Building docker image and pushing to ECR"
