@@ -33,6 +33,16 @@ class BaseSchema(Schema):
         return data
 
 
+class BaseDictSchema(Schema):
+    def load_validate(self, **dict_data):
+        try:
+            data = self.load(dict_data)
+        except exceptions.ValidationError as e:
+            print(e)
+            raise ValidationError
+        return data
+
+
 class TaskSchema(BaseSchema):
     id = fields.UUID(required=True)
     name = fields.Str(required=True, validate=validate.Length(min=1, max=NAME_LENGTH))
@@ -46,6 +56,10 @@ class TaskSchema(BaseSchema):
     labels = fields.List(fields.Nested("LabelSchema", only=("id", "name", "colour")))
 
     _model = models.Task
+
+
+class TaskLabelSchema(BaseDictSchema):
+    labels = fields.List(fields.UUID)
 
 
 class TokenSchema(Schema):

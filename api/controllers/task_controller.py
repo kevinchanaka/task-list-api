@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from api.services import task_service
 from api.helpers import login_required
-from api.schemas import TaskSchema
+from api.schemas import TaskSchema, TaskLabelSchema
 
 bp = Blueprint("tasks", __name__, url_prefix="/api/v1/tasks")
 
@@ -9,6 +9,7 @@ task_create_schema = TaskSchema(exclude=("completed", "created_at", "updated_at"
 task_update_schema = TaskSchema(exclude=("created_at", "updated_at"))
 task_get_schema = TaskSchema(exclude=("user_id",))
 task_list_schema = TaskSchema(exclude=("user_id", "created_at", "updated_at"))
+task_label_schema = TaskLabelSchema()
 
 
 @bp.route("", strict_slashes=False, methods=["GET"])
@@ -54,13 +55,15 @@ def delete(user_id, id):
 @login_required
 def attach(user_id, id):
     payload = request.get_json()
-    task_service.attach_label_to_task(user_id, payload["labelId"], id)
-    return jsonify({"message": "Attached label to task"})
+    task_label_obj = task_label_schema.load_validate(**payload)
+    task_service.attach_labels_to_task(user_id, task_label_obj["labels"], id)
+    return jsonify({"message": "Attached labels to task"})
 
 
 @bp.route("/<id>/detach", methods=["POST"])
 @login_required
 def detach(user_id, id):
     payload = request.get_json()
-    task_service.detach_label_from_task(user_id, payload["labelId"], id)
-    return jsonify({"message": "Detached label from task"})
+    task_label_obj = task_label_schema.load_validate(**payload)
+    task_service.detach_labels_from_task(user_id, task_label_obj["labels"], id)
+    return jsonify({"message": "Detached labels from task"})

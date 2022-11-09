@@ -21,7 +21,7 @@ class TestTaskLabel(BaseTestClass):
         res = self.client.post(f"{TASK_PATH}/", json=test_task)
         self.task = res.get_json()["task"]
         res = self.client.post(
-            f'{TASK_PATH}/{self.task["id"]}/attach', json={"labelId": self.label["id"]}
+            f'{TASK_PATH}/{self.task["id"]}/attach', json={"labels": [self.label["id"]]}
         )
 
     def test_task_label_01_get_tasks_with_label_info(self):
@@ -35,9 +35,9 @@ class TestTaskLabel(BaseTestClass):
         self.assertIsInstance(task["labels"], list)
         self.assertLabel(task["labels"][0])
 
-    def test_task_label_03_detach_label_from_task(self):
+    def test_task_label_03_detach_labels_from_task(self):
         res = self.client.post(
-            f'{TASK_PATH}/{self.task["id"]}/detach', json={"labelId": self.label["id"]}
+            f'{TASK_PATH}/{self.task["id"]}/detach', json={"labels": [self.label["id"]]}
         )
         self.assertEqual(res.status_code, 200)
         res = self.client.get(f'{TASK_PATH}/{self.task["id"]}').get_json()
