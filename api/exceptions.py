@@ -13,6 +13,11 @@ class ValidationError(InvalidUsageError):
         super().__init__("Invalid data", 400)
 
 
+class QueryError(InvalidUsageError):
+    def __init__(self):
+        super().__init__("Invalid query", 400)
+
+
 class NotLoggedInError(InvalidUsageError):
     def __init__(self):
         super().__init__("Unauthorized", 401)
@@ -21,3 +26,8 @@ class NotLoggedInError(InvalidUsageError):
 class InvalidTokenError(InvalidUsageError):
     def __init__(self):
         super().__init__("Invalid token", 401)
+
+
+class InvalidPageNumber(InvalidUsageError):
+    def __init__(self):
+        super().__init__("Invalid page number", 400)

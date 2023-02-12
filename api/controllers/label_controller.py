@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from api.services import label_service
-from api.helpers import login_required
-from api.schemas import LabelSchema
+from api.helpers import login_required, generate_page_info
+from api.schemas import LabelSchema, QueryParamsSchema
 
 bp = Blueprint("labels", __name__, url_prefix="/api/v1/labels")
 
@@ -9,12 +9,16 @@ label_create_schema = LabelSchema(exclude=("created_at", "updated_at", "id"))
 label_update_schema = LabelSchema(exclude=("created_at", "updated_at"))
 label_get_schema = LabelSchema(exclude=("user_id",))
 
+label_params_schema = QueryParamsSchema()
+
 
 @bp.route("", strict_slashes=False, methods=["GET"])
 @login_required
 def list(user_id):
-    labels = label_service.list_labels(user_id)
-    return jsonify({"labels": [label_get_schema.dump(x) for x in labels]})
+    params = label_params_schema.load_validate(**request.args)
+    labels, label_count = label_service.list_labels(user_id, params)
+    page_info = generate_page_info(params, label_count)
+    return jsonify({"labels": [label_get_schema.dump(x) for x in labels], **page_info})
 
 
 @bp.route("/<id>", methods=["GET"])

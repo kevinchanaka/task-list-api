@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from api.services import task_service
-from api.helpers import login_required
-from api.schemas import TaskSchema, TaskLabelSchema
+from api.helpers import login_required, generate_page_info
+from api.schemas import TaskSchema, TaskLabelSchema, TaskParamsSchema
 
 bp = Blueprint("tasks", __name__, url_prefix="/api/v1/tasks")
 
@@ -11,12 +11,17 @@ task_get_schema = TaskSchema(exclude=("user_id",))
 task_list_schema = TaskSchema(exclude=("user_id", "created_at", "updated_at"))
 task_label_schema = TaskLabelSchema()
 
+task_params_schema = TaskParamsSchema()
+
 
 @bp.route("", strict_slashes=False, methods=["GET"])
 @login_required
 def list(user_id):
-    tasks = task_service.list_tasks(user_id)
-    return jsonify({"tasks": [task_get_schema.dump(x) for x in tasks]})
+    args = {**request.args, "labels": request.args.getlist("labels")}
+    params = task_params_schema.load_validate(**args)
+    tasks, task_count = task_service.list_tasks(user_id, params)
+    page_info = generate_page_info(params, task_count)
+    return jsonify({"tasks": [task_get_schema.dump(x) for x in tasks], **page_info})
 
 
 @bp.route("/<id>", methods=["GET"])

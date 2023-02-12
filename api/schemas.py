@@ -1,7 +1,7 @@
 from typing import Callable
 from marshmallow import fields, validate, Schema, post_dump, post_load, exceptions
 from api.config import NAME_LENGTH, DEFAULT_LENGTH
-from api.exceptions import ValidationError
+from api.exceptions import ValidationError, QueryError
 from api import models
 
 
@@ -92,3 +92,30 @@ class LabelSchema(BaseSchema):
     updated_at = fields.DateTime()
 
     _model = models.Label
+
+
+class QueryParamsSchema(Schema):
+    limit = fields.Int(load_default=10)
+    page = fields.Int(load_default=1)
+
+    def load_validate(self, **dict_data):
+        try:
+            data = self.load(dict_data)
+        except exceptions.ValidationError as e:
+            print(e)
+            raise QueryError
+        return data
+
+
+class TaskParamsSchema(QueryParamsSchema):
+    labels = fields.List(fields.UUID, load_default=[])
+
+
+class PageInfoSchema(Schema):
+    def on_bind_field(self, field_name, field_obj):
+        field_obj.data_key = camelcase(field_obj.data_key or field_name)
+
+    limit = fields.Int()
+    page = fields.Int()
+    count = fields.Int()
+    max_page = fields.Int()

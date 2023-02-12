@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from api.exceptions import InvalidUsageError
 from api.models import Label, db
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 
 def create_label(label: Label):
@@ -21,10 +21,22 @@ def get_label(user_id: str, label_id: str) -> Label:
     return label
 
 
-def list_labels(user_id: str):
-    query = select(Label).where(Label.user_id == user_id)
+def list_labels(user_id: str, params: dict):
+    offset = (params["page"] - 1) * params["limit"]
+    query = (
+        select(Label)
+        .where(Label.user_id == user_id)
+        .limit(params["limit"])
+        .offset(offset)
+        .order_by(Label.updated_at.desc())
+    )
     labels = db.session.execute(query).scalars().all()
-    return labels
+
+    query = select(func.count(Label.id)).where(Label.user_id == user_id)
+
+    rowcount = db.session.execute(query).first()[0]
+
+    return labels, rowcount
 
 
 def delete_label(user_id: str, label_id: str):

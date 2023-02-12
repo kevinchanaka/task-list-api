@@ -2,8 +2,8 @@ import uuid
 from datetime import datetime, timezone
 from api.services import label_service
 from api.exceptions import InvalidUsageError
-from api.models import Task, db
-from sqlalchemy import select
+from api.models import Task, db, Label
+from sqlalchemy import select, func
 from typing import List
 
 
@@ -24,10 +24,29 @@ def get_task(user_id: str, task_id: str) -> Task:
     return task
 
 
-def list_tasks(user_id: str):
-    query = select(Task).where(Task.user_id == user_id)
+def list_tasks(user_id: str, params: dict):
+    offset = (params["page"] - 1) * params["limit"]
+    query = (
+        select(Task)
+        .where(Task.user_id == user_id)
+        .limit(params["limit"])
+        .offset(offset)
+        .order_by(Task.updated_at.desc())
+    )
+    if params["labels"]:
+        for label_id in params["labels"]:
+            query = query.where(Task.labels.any(Label.id == label_id))
+
     tasks = db.session.execute(query).scalars().all()
-    return tasks
+
+    query = select(func.count(Task.id)).where(Task.user_id == user_id)
+    if params["labels"]:
+        for label_id in params["labels"]:
+            query = query.where(Task.labels.any(Label.id == label_id))
+
+    rowcount = db.session.execute(query).first()[0]
+
+    return tasks, rowcount
 
 
 def delete_task(user_id: str, task_id: str):

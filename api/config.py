@@ -20,6 +20,9 @@ HASH_LENGTH = 102
 TIMESTAMP_LENGTH = 11
 DEFAULT_LENGTH = 255
 
+API_MAX_PAGES = 100
+API_DEFAULT_LIMIT = 10
+
 DB_NAME = os.getenv("DB_NAME")
 DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
@@ -39,7 +42,7 @@ SQLALCHEMY_ENGINE_STRING = "mysql+pymysql://{}:{}@{}:{}/{}".format(
 )
 
 ACCESS_TOKEN_SECRET = os.getenv("ACCESS_TOKEN_SECRET")
-ACCESS_TOKEN_EXPIRY = timedelta(minutes=5)
+ACCESS_TOKEN_EXPIRY = timedelta(minutes=60)  # timedelta(minutes=5)
 REFRESH_TOKEN_SECRET = os.getenv("REFRESH_TOKEN_SECRET")
 REFRESH_TOKEN_EXPIRY = timedelta(days=1)
 
