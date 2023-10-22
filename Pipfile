@@ -15,12 +15,11 @@ mysqlclient = "*"
 
 [dev-packages]
 flake8 = "*"
-mypy = "*"
 alembic = "*"
 black = "*"
 
 [requires]
-python_version = "3.10"
+python_version = "3.11"
 
 [scripts]
 migrate = "alembic --config migrations/alembic.ini upgrade head"
