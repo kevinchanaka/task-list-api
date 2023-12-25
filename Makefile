@@ -9,7 +9,7 @@ app=task-list-api
 all : db
 
 .env:
-	./deploy/config/generate-env.sh
+	./files/generate-env.sh
 
 db : .env
 	docker network create ${network}
