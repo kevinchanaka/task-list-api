@@ -1,27 +1,37 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify
 from api.services import task_service
-from api.helpers import login_required, generate_page_info
-from api.schemas import TaskSchema, TaskLabelSchema, TaskParamsSchema
+from api.helpers import (
+    login_required,
+    parse_request_body,
+    parse_request_params,
+    get_page_info,
+)
+from api.schemas import TaskSchema, TaskLabelSchema, TaskQuerySchema
 
 bp = Blueprint("tasks", __name__, url_prefix="/api/v1/tasks")
 
-task_create_schema = TaskSchema(exclude=("completed", "created_at", "updated_at", "id"))
-task_update_schema = TaskSchema(exclude=("created_at", "updated_at"))
+task_create_schema = TaskSchema(
+    exclude=("user_id", "completed", "created_at", "updated_at", "id")
+)
+task_update_schema = TaskSchema(exclude=("created_at", "updated_at", "user_id", "id"))
 task_get_schema = TaskSchema(exclude=("user_id",))
 task_list_schema = TaskSchema(exclude=("user_id", "created_at", "updated_at"))
 task_label_schema = TaskLabelSchema()
 
-task_params_schema = TaskParamsSchema()
+task_query_schema = TaskQuerySchema()
 
 
 @bp.route("", strict_slashes=False, methods=["GET"])
 @login_required
-def list(user_id):
-    args = {**request.args, "labels": request.args.getlist("labels")}
-    params = task_params_schema.load_validate(**args)
+@parse_request_params(task_query_schema)
+def list(user_id, params):
     tasks, task_count = task_service.list_tasks(user_id, params)
-    page_info = generate_page_info(params, task_count)
-    return jsonify({"tasks": [task_get_schema.dump(x) for x in tasks], **page_info})
+    return jsonify(
+        {
+            "tasks": [task_get_schema.dump(x) for x in tasks],
+            "pageInfo": get_page_info(params, task_count),
+        }
+    )
 
 
 @bp.route("/<id>", methods=["GET"])
@@ -33,19 +43,17 @@ def get(user_id, id):
 
 @bp.route("", strict_slashes=False, methods=["POST"])
 @login_required
-def create(user_id):
-    payload = request.get_json()
-    task = task_create_schema.load_validate(userId=user_id, **payload)
-    task_service.create_task(task)
-    return jsonify({"task": task_get_schema.dump(task), "message": "Task added"})
+@parse_request_body(task_create_schema)
+def create(user_id, data):
+    task_service.create_task(user_id, data)
+    return jsonify({"task": task_get_schema.dump(data), "message": "Task added"})
 
 
 @bp.route("/<id>", methods=["PUT"])
 @login_required
-def update(user_id, id):
-    payload = request.get_json()
-    task_obj = task_update_schema.load_validate(userId=user_id, id=id, **payload)
-    task = task_service.update_task(task_obj.user_id, task_obj.id, payload)
+@parse_request_body(task_update_schema)
+def update(user_id, id, data):
+    task = task_service.update_task(user_id, id, data)
     return jsonify({"task": task_get_schema.dump(task), "message": "Task modified"})
 
 
@@ -56,19 +64,17 @@ def delete(user_id, id):
     return jsonify({"message": "Task deleted"})
 
 
-@bp.route("/<id>/attach", methods=["POST"])
+@bp.route("/attach", methods=["POST"])
 @login_required
-def attach(user_id, id):
-    payload = request.get_json()
-    task_label_obj = task_label_schema.load_validate(**payload)
-    task_service.attach_labels_to_task(user_id, task_label_obj["labels"], id)
+@parse_request_body(task_label_schema)
+def attach(user_id, data):
+    task_service.attach_labels_to_task(user_id, data)
     return jsonify({"message": "Attached labels to task"})
 
 
-@bp.route("/<id>/detach", methods=["POST"])
+@bp.route("/detach", methods=["POST"])
 @login_required
-def detach(user_id, id):
-    payload = request.get_json()
-    task_label_obj = task_label_schema.load_validate(**payload)
-    task_service.detach_labels_from_task(user_id, task_label_obj["labels"], id)
+@parse_request_body(task_label_schema)
+def detach(user_id, data):
+    task_service.detach_labels_from_task(user_id, data)
     return jsonify({"message": "Detached labels from task"})

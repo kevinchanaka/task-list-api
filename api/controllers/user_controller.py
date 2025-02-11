@@ -1,6 +1,6 @@
 from flask import Blueprint, request, make_response, jsonify
 from api.services import user_service
-from api.helpers import refresh_token_required
+from api.helpers import refresh_token_required, parse_request_body
 from api.config import (
     ACCESS_TOKEN_EXPIRY,
     REFRESH_TOKEN_EXPIRY,
@@ -17,20 +17,18 @@ user_output_schema = UserSchema(exclude=("password_hash", "password"))
 
 
 @bp.route("/register", methods=["POST"])
-def register():
-    payload = request.get_json()
-    user = user_register_schema.load_validate(**payload)
-    user_service.register_user(user)
+@parse_request_body(user_register_schema)
+def register(data):
+    user_service.register_user(data)
     return jsonify(
-        {"user": user_output_schema.dump(user), "message": "User registered"}
+        {"user": user_output_schema.dump(data), "message": "User registered"}
     )
 
 
 @bp.route("/login", methods=["POST"])
-def login():
-    payload = request.get_json()
-    user = user_login_schema.load_validate(**payload)
-    user, access_token, refresh_token = user_service.login_user(user)
+@parse_request_body(user_login_schema)
+def login(data):
+    user, access_token, refresh_token = user_service.login_user(data)
     res = make_response({"user": user_output_schema.dump(user)})
     res.set_cookie(
         "access_token",

@@ -1,24 +1,33 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify
 from api.services import label_service
-from api.helpers import login_required, generate_page_info
-from api.schemas import LabelSchema, QueryParamsSchema
+from api.helpers import (
+    login_required,
+    parse_request_params,
+    parse_request_body,
+    get_page_info,
+)
+from api.schemas import LabelSchema, PageInfoSchema
 
 bp = Blueprint("labels", __name__, url_prefix="/api/v1/labels")
 
-label_create_schema = LabelSchema(exclude=("created_at", "updated_at", "id"))
-label_update_schema = LabelSchema(exclude=("created_at", "updated_at"))
+label_create_schema = LabelSchema(exclude=("user_id", "created_at", "updated_at", "id"))
+label_update_schema = LabelSchema(exclude=("user_id", "id", "created_at", "updated_at"))
 label_get_schema = LabelSchema(exclude=("user_id",))
 
-label_params_schema = QueryParamsSchema()
+label_params_schema = PageInfoSchema()
 
 
 @bp.route("", strict_slashes=False, methods=["GET"])
 @login_required
-def list(user_id):
-    params = label_params_schema.load_validate(**request.args)
+@parse_request_params(label_params_schema)
+def list(user_id, params):
     labels, label_count = label_service.list_labels(user_id, params)
-    page_info = generate_page_info(params, label_count)
-    return jsonify({"labels": [label_get_schema.dump(x) for x in labels], **page_info})
+    return jsonify(
+        {
+            "labels": [label_get_schema.dump(x) for x in labels],
+            "pageInfo": get_page_info(params, label_count),
+        }
+    )
 
 
 @bp.route("/<id>", methods=["GET"])
@@ -30,19 +39,17 @@ def get(user_id, id):
 
 @bp.route("", strict_slashes=False, methods=["POST"])
 @login_required
-def create(user_id):
-    payload = request.get_json()
-    label = label_create_schema.load_validate(userId=user_id, **payload)
-    label_service.create_label(label)
-    return jsonify({"label": label_get_schema.dump(label), "message": "Label added"})
+@parse_request_body(label_create_schema)
+def create(user_id, data):
+    label_service.create_label(user_id, data)
+    return jsonify({"label": label_get_schema.dump(data), "message": "Label added"})
 
 
 @bp.route("/<id>", methods=["PUT"])
 @login_required
-def update(user_id, id):
-    payload = request.get_json()
-    label_update_schema.load_validate(userId=user_id, id=id, **payload)
-    label = label_service.update_label(user_id, id, payload)
+@parse_request_body(label_update_schema)
+def update(user_id, id, data):
+    label = label_service.update_label(user_id, id, data)
     return jsonify({"label": label_get_schema.dump(label), "message": "Label modified"})
 
 

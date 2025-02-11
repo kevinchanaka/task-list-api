@@ -2,6 +2,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy import Column, ForeignKey, Table
 import sqlalchemy as sa
 from flask_sqlalchemy import SQLAlchemy
+from dataclasses import dataclass
+from typing import List
 
 db = SQLAlchemy()
 
@@ -16,7 +18,7 @@ tasks_labels_map = Table(
 
 class Task(db.Model):
     __tablename__ = "tasks"
-    id = Column(sa.Integer, primary_key=True)
+    id = Column(sa.String, primary_key=True)
     name = Column(sa.String, nullable=False)
     description = Column(sa.String, nullable=False)
     user_id = Column(sa.String, ForeignKey("users.id"))
@@ -57,3 +59,20 @@ class Label(db.Model):
     updated_at = Column(sa.String, nullable=False)
 
     tasks = relationship("Task", secondary=tasks_labels_map, back_populates="labels")
+
+
+@dataclass
+class TaskLabelAssociation:
+    task_id: str
+    label_ids: List[str]
+
+
+@dataclass
+class PageInfo:
+    limit: int
+    page: int
+
+
+@dataclass
+class TaskQuery(PageInfo):
+    label: List[str]

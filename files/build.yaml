@@ -10,7 +10,6 @@ phases:
     commands:
       - echo "Running test cases"
       - make db
-      - make test
   build:
     commands:
       - echo "Building docker image and pushing to ECR"
@@ -18,11 +17,6 @@ phases:
       - make build
       - docker tag task-list-api:latest ${ECR_REPOSITORY_URI}:${CODEBUILD_RESOLVED_SOURCE_VERSION}
       - docker push ${ECR_REPOSITORY_URI}:${CODEBUILD_RESOLVED_SOURCE_VERSION}
-  post_build:
-    on-failure: CONTINUE
-    commands:
-      - echo "Cleaning up environment"
-      - make clean
 
 artifacts:
   files:

@@ -1,11 +1,12 @@
 import uuid
 from datetime import datetime, timezone
 from api.exceptions import InvalidUsageError
-from api.models import Label, db
+from api.models import Label, db, PageInfo
 from sqlalchemy import select, func
 
 
-def create_label(label: Label):
+def create_label(user_id: str, label: Label):
+    label.user_id = user_id
     label.id = uuid.uuid4()
     label.created_at = datetime.now(timezone.utc)
     label.updated_at = label.created_at
@@ -21,12 +22,12 @@ def get_label(user_id: str, label_id: str) -> Label:
     return label
 
 
-def list_labels(user_id: str, params: dict):
-    offset = (params["page"] - 1) * params["limit"]
+def list_labels(user_id: str, page_info: PageInfo):
+    offset = (page_info.page - 1) * page_info.limit
     query = (
         select(Label)
         .where(Label.user_id == user_id)
-        .limit(params["limit"])
+        .limit(page_info.limit)
         .offset(offset)
         .order_by(Label.updated_at.desc())
     )
@@ -46,10 +47,10 @@ def delete_label(user_id: str, label_id: str):
     db.session.commit()
 
 
-def update_label(user_id: str, label_id: str, data: dict) -> Label:
+def update_label(user_id: str, label_id: str, label_obj: Label) -> Label:
     label = get_label(user_id, label_id)
-    for k, v in data.items():
-        setattr(label, k, v)
+    label.colour = label_obj.colour
+    label.name = label_obj.name
     label.updated_at = datetime.now(timezone.utc)
     db.session.commit()
     return label
