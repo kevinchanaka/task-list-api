@@ -12,6 +12,8 @@ pyjwt = "*"
 gunicorn = "*"
 flask-sqlalchemy = "*"
 mysqlclient = "*"
+boto3 = "*"
+aws-error-utils = "*"
 
 [dev-packages]
 flake8 = "*"

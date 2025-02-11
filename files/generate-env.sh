@@ -17,4 +17,6 @@ ACCESS_TOKEN_SECRET=$(generate_string 128)
 REFRESH_TOKEN_SECRET=$(generate_string 128)
 FLASK_DEBUG=True
 ALEMBIC_CONFIG=migrations/alembic.ini
+API_COGNITO_USER_POOL=ap-southeast-2_1tABiQmkv
+API_COGNITO_CLIENT_ID=1s3d9fhogohfbe2enafn8ucovb
 EOF
