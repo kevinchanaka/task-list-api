@@ -1,0 +1,132 @@
+package service
+
+import (
+	"example/task-list/pkg/model"
+	"example/task-list/pkg/store"
+	"example/task-list/pkg/util"
+	"log"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
+)
+
+type Service struct {
+	Store  store.Store
+	Config util.Config
+}
+
+func NewService(store store.Store, config util.Config) *Service {
+	return &Service{Store: store, Config: config}
+}
+
+func (s *Service) ListTasks(userId string) ([]model.Task, error) {
+	tasks, err := s.Store.ListTasks(userId)
+	if err != nil {
+		return nil, util.ErrListTasksFailed
+	}
+	return tasks, err
+}
+
+func (s *Service) CreateTask(userId string, taskReq util.TaskRequest) (model.Task, error) {
+	task := model.NewTask(userId, taskReq.Name, taskReq.Description)
+	if err := s.Store.CreateTask(task); err != nil {
+		return task, err
+	}
+	return task, nil
+}
+
+func (s *Service) UpdateTask(userId string, taskId string, taskReq util.TaskRequest) (model.Task, error) {
+
+	task, err := s.GetTask(userId, taskId)
+
+	if err == util.ErrTaskNotFound {
+		return model.Task{}, err
+	}
+
+	task.Name = taskReq.Name
+	task.Description = taskReq.Description
+	task.Completed = taskReq.Completed
+	task.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+
+	if err := s.Store.UpdateTask(task); err != nil {
+		return model.Task{}, err
+	}
+	return task, nil
+}
+
+func (s *Service) GetTask(userId, taskId string) (model.Task, error) {
+	task, err := s.Store.GetTask(userId, taskId)
+	if err == store.ErrRecordNotFound {
+		return task, util.ErrTaskNotFound
+	}
+	return task, nil
+}
+
+func (s *Service) DeleteTask(userId, taskId string) error {
+	return s.Store.DeleteTask(userId, taskId)
+}
+
+func (s *Service) RegisterUser(userReq util.UserRequest) (model.User, error) {
+
+	_, err := s.Store.GetUser(userReq.Email)
+	if err == nil {
+		return model.User{}, util.ErrUserExists
+	}
+
+	user, err := model.NewUser(userReq.Email, userReq.Password)
+	if err != nil {
+		return model.User{}, err
+	}
+
+	err = s.Store.CreateUser(user)
+	if err != nil {
+		return model.User{}, err
+	}
+	return user, nil
+}
+
+func (s *Service) LoginUser(userReq util.UserRequest) (string, string, error) {
+
+	user, err := s.Store.GetUser(userReq.Email)
+	if err == store.ErrRecordNotFound {
+		return "", "", util.ErrInvalidCredentials
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(userReq.Password))
+	if err != nil {
+		return "", "", util.ErrInvalidCredentials
+	}
+
+	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": user.Id,
+		"exp": time.Now().Add(time.Minute * 10).Unix(),
+	})
+	refreshTokenExpiry := time.Now().Add(time.Minute * 20).Unix()
+	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": user.Id,
+		"exp": refreshTokenExpiry,
+	})
+
+	signedAccessToken, err := accessToken.SignedString([]byte(s.Config.AccessTokenSecret))
+	if err != nil {
+		log.Printf("failed to generate access token: %v", err)
+		return "", "", err
+	}
+
+	signedRefreshToken, err := refreshToken.SignedString([]byte(s.Config.RefreshTokenSecret))
+	if err != nil {
+		log.Printf("failed to generate refresh token: %v", err)
+		return "", "", err
+	}
+
+	refreshTokenObj := model.NewToken(signedRefreshToken, user.Id, refreshTokenExpiry)
+	err = s.Store.CreateToken(refreshTokenObj)
+	if err != nil {
+		log.Printf("failed to store refresh token: %v", err)
+		return "", "", err
+	}
+
+	return signedAccessToken, signedRefreshToken, nil
+
+}

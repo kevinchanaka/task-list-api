@@ -1,0 +1,59 @@
+
+GET http://localhost:5000/hello
+
+###
+
+GET http://localhost:5000/tasks
+
+###
+POST http://localhost:5000/tasks
+Content-Type: application/json
+
+{
+    "name": "Vacuum house",
+    "description": "Vacuum house"
+}
+
+###
+
+GET http://localhost:5000/tasks/5798267c-49ca-46fb-8c41-c2e39e3d5cb0
+
+###
+
+PUT http://localhost:5000/tasks/134d98f2-60bf-4e58-b638-28e5bc3788fb
+Content-Type: application/json
+
+{
+    "name": "Go to bed",
+    "description": "Go to sleep"
+}
+
+###
+
+DELETE http://localhost:5000/tasks/3d3fe390-0898-46cb-acaa-435b26b80f99
+
+
+###
+
+POST http://localhost:5000/users/register
+Content-Type: application/json
+
+{
+    "email": "foobar@foo.com",
+    "password": "test123"
+}
+
+###
+
+POST http://localhost:5000/users/login
+Content-Type: application/json
+
+{
+    "email": "foobar@foo.com",
+    "password": "test123"
+}
+
+###
+
+POST http://localhost:5000/users/logout
+Content-Type: application/json
