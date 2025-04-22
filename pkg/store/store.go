@@ -28,6 +28,8 @@ type Store interface {
 	CreateUser(model.User) error
 	GetUser(string) (model.User, error)
 	CreateToken(model.Token) error
+	GetToken(string) (model.Token, error)
+	DeleteToken(string) error
 }
 
 type DatabaseStore struct {

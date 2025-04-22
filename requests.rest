@@ -16,11 +16,11 @@ Content-Type: application/json
 
 ###
 
-GET http://localhost:5000/tasks/5798267c-49ca-46fb-8c41-c2e39e3d5cb0
+GET http://localhost:5000/tasks/d2c8e5c1-7088-42e3-96de-a5f3a214351f
 
 ###
 
-PUT http://localhost:5000/tasks/134d98f2-60bf-4e58-b638-28e5bc3788fb
+PUT http://localhost:5000/tasks/d2c8e5c1-7088-42e3-96de-a5f3a214351f
 Content-Type: application/json
 
 {
@@ -56,4 +56,9 @@ Content-Type: application/json
 ###
 
 POST http://localhost:5000/users/logout
+Content-Type: application/json
+
+###
+
+POST http://localhost:5000/users/token
 Content-Type: application/json
