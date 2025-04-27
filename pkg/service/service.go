@@ -139,33 +139,26 @@ func (s *Service) LoginUser(userReq util.UserRequest) (string, string, error) {
 }
 
 func (s *Service) LogoutUser(accessToken string, refreshToken string) {
-	s.Store.DeleteToken(accessToken)
-	s.Store.DeleteToken(refreshToken)
+	_, accessTokenParsed, _ := ParseToken(accessToken, s.Config.AccessTokenSecret)
+	_, refreshTokenParsed, _ := ParseToken(refreshToken, s.Config.RefreshTokenSecret)
+
+	s.Store.DeleteToken(accessTokenParsed)
+	s.Store.DeleteToken(refreshTokenParsed)
 }
 
-func (s *Service) GetNewToken(userId, refreshToken string) string { // TODO: make this better, don't log out user if token is invalid
+func (s *Service) GetNewToken(refreshToken string) (string, error) {
 
-	tokenValid := true
-
-	token, err := s.Store.GetToken(refreshToken)
+	_, refreshTokenParsed, err := ParseToken(refreshToken, s.Config.RefreshTokenSecret)
 	if err != nil {
-		log.Printf("failed to get token: %v", err)
-		tokenValid = false
+		log.Printf("failed to parse refresh token: %v", err)
+		return "", err
 	}
 
-	if token.UserId != userId {
-		log.Printf("token userId %v does not match userId %v", token.UserId, userId)
-		tokenValid = false
-	}
-
-	if token.Expiry < time.Now().Unix() {
-		log.Printf("token has already expired")
-		tokenValid = false
-	}
-
-	if !tokenValid {
-		s.LogoutUser("", refreshToken)
-		return ""
+	// NOTE: this is performed to handle logout scenarios (refresh token is deleted from db)
+	token, err := s.Store.GetToken(refreshTokenParsed)
+	if err != nil {
+		log.Printf("unable to find token in database: %v", err)
+		return "", err
 	}
 
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -175,11 +168,10 @@ func (s *Service) GetNewToken(userId, refreshToken string) string { // TODO: mak
 	signedAccessToken, err := accessToken.SignedString([]byte(s.Config.AccessTokenSecret))
 	if err != nil {
 		log.Printf("failed to generate access token: %v", err)
-		s.LogoutUser("", refreshToken)
-		return ""
+		return "", err
 	}
 
-	return signedAccessToken
+	return signedAccessToken, nil
 }
 
 func ParseToken(tokenString string, tokenSecret string) (string, string, error) {

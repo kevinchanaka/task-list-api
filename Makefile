@@ -7,8 +7,10 @@ PHONY=db run
 db :
 	docker run --name db-task-list \
 	  --restart unless-stopped \
-	  -p 5432:5432 \
-	  -e POSTGRES_PASSWORD=test123 \
+	  -p ${DB_PORT}:5432 \
+	  -e POSTGRES_USER=${DB_USER} \
+	  -e POSTGRES_PASSWORD=${DB_PASSWORD} \
+	  -e POSTGRES_DB=${DB_NAME} \
 	  -d postgres
 
 db-shell :

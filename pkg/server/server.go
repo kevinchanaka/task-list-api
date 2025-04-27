@@ -63,36 +63,25 @@ func jsonHeader(next http.Handler) http.Handler {
 	})
 }
 
+func getCookie(r *http.Request, cookieHeader string) string {
+	cookie, err := r.Cookie(cookieHeader)
+	if err != nil {
+		log.Printf("failed to parse cookie '%v': %v", cookieHeader, err)
+		return ""
+	}
+	return cookie.Value
+}
+
 func createCheckTokenMiddleware(cookieHeader, tokenSecret string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			cookie, err := r.Cookie(cookieHeader)
-			if err != nil {
-				log.Printf("failed to parse cookie: %v", err)
+			cookieValue := getCookie(r, cookieHeader)
+			if cookieValue == "" {
 				httpError(w, util.ErrUnauthorized, http.StatusUnauthorized)
 				return
 			}
-			// TODO: move to service layer
-			// token, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (any, error) {
-			// 	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			// 		return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-			// 	}
-			// 	return []byte(tokenSecret), nil
-			// })
 
-			// if err != nil {
-			// 	log.Printf("failed to parse token: %v", err)
-			// 	httpError(w, util.ErrUnauthorized, http.StatusUnauthorized)
-			// 	return
-			// }
-
-			// sub, err := token.Claims.GetSubject()
-			// if err != nil {
-			// 	log.Printf("failed to retrieve subject from token: %v", err)
-			// 	httpError(w, util.ErrUnauthorized, http.StatusUnauthorized)
-			// 	return
-			// }
-			user, _, err := service.ParseToken(cookie.Value, tokenSecret)
+			user, _, err := service.ParseToken(cookieValue, tokenSecret)
 			if err != nil {
 				log.Printf("failed to retrieve user from token: %v", err)
 				httpError(w, util.ErrUnauthorized, http.StatusUnauthorized)
@@ -228,7 +217,7 @@ func (s *Server) loginUser(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		HttpOnly: true,
 		SameSite: http.SameSiteDefaultMode,
-		Expires:  time.Now().Add(time.Minute * 10),
+		Expires:  time.Now().Add(s.Config.AccessTokenExpiry),
 	}
 
 	refreshTokenCookie := &http.Cookie{
@@ -237,7 +226,7 @@ func (s *Server) loginUser(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		HttpOnly: true,
 		SameSite: http.SameSiteDefaultMode,
-		Expires:  time.Now().Add(time.Minute * 20), // TODO: adjust expiry if app is run in prod
+		Expires:  time.Now().Add(s.Config.RefreshTokenExpiry),
 	}
 
 	http.SetCookie(w, accessTokenCookie)
@@ -248,44 +237,10 @@ func (s *Server) loginUser(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) logoutUser(w http.ResponseWriter, r *http.Request) {
 
-	cookie, err := r.Cookie("refreshToken")
-	if err != nil {
-		log.Printf("failed to parse refreshToken cookie: %v", err)
-	}
+	accessCookieValue := getCookie(r, "accessToken")
+	refreshCookieValue := getCookie(r, "refreshToken")
 
-	_, refreshToken, err := service.ParseToken(cookie.Value, s.Config.RefreshTokenSecret)
-
-	// refreshToken, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (any, error) {
-	// 	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-	// 		return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-	// 	}
-	// 	return []byte(s.Config.RefreshTokenSecret), nil
-	// })
-
-	if err != nil {
-		log.Printf("failed to parse refresh token: %v", err)
-		return
-	}
-
-	accessCookie, err := r.Cookie("accessToken")
-	if err != nil {
-		log.Printf("failed to parse accessToken cookie: %v", err)
-	}
-
-	// accessToken, err := jwt.Parse(accessCookie.Value, func(token *jwt.Token) (any, error) {
-	// 	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-	// 		return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-	// 	}
-	// 	return []byte(s.Config.AccessTokenSecret), nil
-	// })
-	_, accessToken, err := service.ParseToken(accessCookie.Value, s.Config.AccessTokenSecret)
-
-	if err != nil {
-		log.Printf("failed to parse access token: %v", err)
-		return
-	}
-
-	s.Service.LogoutUser(accessToken, refreshToken)
+	s.Service.LogoutUser(accessCookieValue, refreshCookieValue)
 
 	clearedAccessTokenCookie := &http.Cookie{
 		Name:     "accessToken",
@@ -317,34 +272,12 @@ func (s *Server) createAccessToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// token, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (any, error) {
-	// 	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-	// 		return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-	// 	}
-	// 	return []byte(s.Config.RefreshTokenSecret), nil
-	// })
-
-	// if err != nil {
-	// 	log.Printf("failed to parse token: %v", err)
-	// 	httpError(w, util.ErrUnauthorized, http.StatusUnauthorized)
-	// 	return
-	// }
-
-	// sub, err := token.Claims.GetSubject()
-	// if err != nil {
-	// 	log.Printf("failed to retrieve subject from token: %v", err)
-	// 	httpError(w, util.ErrUnauthorized, http.StatusUnauthorized)
-	// 	return
-	// }
-
-	userId, refreshToken, err := service.ParseToken(cookie.Value, s.Config.RefreshTokenSecret)
+	newAccessToken, err := s.Service.GetNewToken(cookie.Value)
 	if err != nil {
-		log.Printf("failed to retrieve user from token: %v", err)
+		log.Printf("failed to generate new access token: %v", err)
 		httpError(w, util.ErrUnauthorized, http.StatusUnauthorized)
 		return
 	}
-
-	newAccessToken := s.Service.GetNewToken(userId, refreshToken)
 
 	accessTokenCookie := &http.Cookie{
 		Name:     "accessToken",

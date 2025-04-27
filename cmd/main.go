@@ -11,15 +11,13 @@ import (
 )
 
 func main() {
-	log.Println("Loading config...")
-	config := util.NewConfig()
-
 	log.Println("Loading dependencies...")
 	// Declare list of dependencies here (DI)
+	config := util.NewConfig()
 	appStore := store.NewDatabaseStore(config)
 	appService := service.NewService(appStore, config)
 	appServer := server.NewServer(appService, config)
 
-	log.Println("Starting server...")
+	log.Printf("Starting server in %v mode...", config.Environment)
 	http.ListenAndServe(":5000", appServer.Router)
 }

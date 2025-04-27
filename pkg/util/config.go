@@ -3,9 +3,11 @@ package util
 import (
 	"log"
 	"os"
+	"time"
 )
 
 type Config struct {
+	Environment        string
 	DbName             string
 	DbUser             string
 	DbPassword         string
@@ -13,11 +15,15 @@ type Config struct {
 	DbPort             string
 	AccessTokenSecret  string
 	RefreshTokenSecret string
+	AccessTokenExpiry  time.Duration
+	RefreshTokenExpiry time.Duration
 }
 
 func NewConfig() Config {
 
 	appConfig := Config{}
+
+	appConfig.Environment = getEnvVarDefault("ENVIRONMENT", "development")
 
 	appConfig.DbName = getEnvVar("DB_NAME")
 	appConfig.DbUser = getEnvVar("DB_USER")
@@ -27,6 +33,13 @@ func NewConfig() Config {
 
 	appConfig.AccessTokenSecret = getEnvVar("ACCESS_TOKEN_SECRET")
 	appConfig.RefreshTokenSecret = getEnvVar("REFRESH_TOKEN_SECRET")
+	appConfig.AccessTokenExpiry = time.Minute * 60
+	appConfig.RefreshTokenExpiry = time.Hour * 24 * 3
+
+	if appConfig.Environment == "development" {
+		appConfig.AccessTokenExpiry = time.Minute * 5
+		appConfig.RefreshTokenExpiry = time.Minute * 10
+	}
 
 	return appConfig
 }
