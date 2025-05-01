@@ -77,14 +77,14 @@ func createCheckTokenMiddleware(cookieHeader, tokenSecret string) func(next http
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			cookieValue := getCookie(r, cookieHeader)
 			if cookieValue == "" {
-				httpError(w, util.ErrUnauthorized, http.StatusUnauthorized)
+				httpError(w, service.ErrUnauthorized, http.StatusUnauthorized)
 				return
 			}
 
 			user, _, err := service.ParseToken(cookieValue, tokenSecret)
 			if err != nil {
 				log.Printf("failed to retrieve user from token: %v", err)
-				httpError(w, util.ErrUnauthorized, http.StatusUnauthorized)
+				httpError(w, service.ErrUnauthorized, http.StatusUnauthorized)
 				return
 			}
 
@@ -110,7 +110,7 @@ func (s *Server) getTasks(w http.ResponseWriter, r *http.Request) {
 
 	tasks, err := s.Service.ListTasks(userId)
 	if err != nil {
-		httpError(w, util.ErrGetTaskFailed, http.StatusInternalServerError)
+		httpError(w, service.ErrGetTaskFailed, http.StatusInternalServerError)
 		return
 	}
 	json.NewEncoder(w).Encode(util.TaskListResponse{Tasks: tasks})
@@ -121,11 +121,11 @@ func (s *Server) getTask(w http.ResponseWriter, r *http.Request) {
 	userId := getUserIdFromContext(r)
 
 	task, err := s.Service.GetTask(userId, id)
-	if err == util.ErrTaskNotFound {
+	if err == service.ErrTaskNotFound {
 		httpError(w, err, http.StatusNotFound)
 		return
 	} else if err != nil {
-		httpError(w, util.ErrListTasksFailed, http.StatusInternalServerError)
+		httpError(w, service.ErrListTasksFailed, http.StatusInternalServerError)
 		return
 	}
 	json.NewEncoder(w).Encode(util.TaskResponse{Task: task})
@@ -143,7 +143,7 @@ func (s *Server) postTask(w http.ResponseWriter, r *http.Request) {
 
 	task, err := s.Service.CreateTask(userId, taskReq)
 	if err != nil {
-		httpError(w, util.ErrCreateTaskFailed, http.StatusInternalServerError)
+		httpError(w, service.ErrCreateTaskFailed, http.StatusInternalServerError)
 		return
 	}
 	json.NewEncoder(w).Encode(util.TaskResponse{Task: task})
@@ -161,11 +161,11 @@ func (s *Server) putTask(w http.ResponseWriter, r *http.Request) {
 	userId := getUserIdFromContext(r)
 
 	task, err := s.Service.UpdateTask(userId, taskId, taskReq)
-	if err == util.ErrTaskNotFound {
+	if err == service.ErrTaskNotFound {
 		httpError(w, err, http.StatusNotFound)
 		return
 	} else if err != nil {
-		httpError(w, util.ErrUpdateTaskFailed, http.StatusInternalServerError)
+		httpError(w, service.ErrUpdateTaskFailed, http.StatusInternalServerError)
 		return
 	}
 	json.NewEncoder(w).Encode(util.TaskResponse{Task: task})
@@ -177,7 +177,7 @@ func (s *Server) deleteTask(w http.ResponseWriter, r *http.Request) {
 
 	err := s.Service.DeleteTask(userId, id)
 	if err != nil {
-		httpError(w, util.ErrDeleteTaskFailed, http.StatusInternalServerError)
+		httpError(w, service.ErrDeleteTaskFailed, http.StatusInternalServerError)
 		return
 	}
 	json.NewEncoder(w).Encode(util.NewMsg("Task deleted"))
@@ -188,11 +188,11 @@ func (s *Server) postUser(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&userReq) // TODO: validation
 
 	user, err := s.Service.RegisterUser(userReq)
-	if err == util.ErrUserExists {
+	if err == service.ErrUserExists {
 		httpError(w, err, http.StatusBadRequest)
 		return
 	} else if err != nil {
-		httpError(w, util.ErrCreateUserFailed, http.StatusInternalServerError)
+		httpError(w, service.ErrCreateUserFailed, http.StatusInternalServerError)
 		return
 	}
 	json.NewEncoder(w).Encode(util.UserResponse{User: user})
@@ -203,11 +203,11 @@ func (s *Server) loginUser(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&userReq) // TODO: validation
 
 	accessToken, refreshToken, err := s.Service.LoginUser(userReq)
-	if err == util.ErrInvalidCredentials {
+	if err == service.ErrInvalidCredentials {
 		httpError(w, err, http.StatusUnauthorized)
 		return
 	} else if err != nil {
-		httpError(w, util.ErrLoginFailed, http.StatusInternalServerError)
+		httpError(w, service.ErrLoginFailed, http.StatusInternalServerError)
 		return
 	}
 
@@ -268,14 +268,14 @@ func (s *Server) createAccessToken(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("refreshToken")
 	if err != nil {
 		log.Printf("failed to parse cookie: %v", err)
-		httpError(w, util.ErrUnauthorized, http.StatusUnauthorized)
+		httpError(w, service.ErrUnauthorized, http.StatusUnauthorized)
 		return
 	}
 
 	newAccessToken, err := s.Service.GetNewToken(cookie.Value)
 	if err != nil {
 		log.Printf("failed to generate new access token: %v", err)
-		httpError(w, util.ErrUnauthorized, http.StatusUnauthorized)
+		httpError(w, service.ErrUnauthorized, http.StatusUnauthorized)
 		return
 	}
 

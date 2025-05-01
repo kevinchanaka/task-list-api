@@ -8,6 +8,6 @@ Simple API to keep track of tasks
 - Refactor (done)
 - Testing
 - DI (done)
-- User authentication
+- User authentication (done)
 - Labels for tasks
 - DB migrations (defer)

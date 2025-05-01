@@ -14,6 +14,19 @@ import (
 )
 
 var (
+	ErrTaskNotFound     = errors.New("task not found")
+	ErrListTasksFailed  = errors.New("unable to retrieve tasks")
+	ErrGetTaskFailed    = errors.New("unable to retrieve task")
+	ErrCreateTaskFailed = errors.New("unable to create task")
+	ErrUpdateTaskFailed = errors.New("unable to update task")
+	ErrDeleteTaskFailed = errors.New("unable to delete task")
+
+	ErrLoginFailed        = errors.New("unable to login")
+	ErrUserExists         = errors.New("email address already in-use")
+	ErrCreateUserFailed   = errors.New("unable to register user")
+	ErrInvalidCredentials = errors.New("invalid username or password")
+	ErrUnauthorized       = errors.New("unable to verify user identity")
+
 	ErrParseTokenFailed      = errors.New("failed to parse token")
 	ErrRetrieveSubjectFailed = errors.New("failed to retrieve subject from token")
 )
@@ -30,7 +43,7 @@ func NewService(store store.Store, config util.Config) *Service {
 func (s *Service) ListTasks(userId string) ([]model.Task, error) {
 	tasks, err := s.Store.ListTasks(userId)
 	if err != nil {
-		return nil, util.ErrListTasksFailed
+		return nil, ErrListTasksFailed
 	}
 	return tasks, err
 }
@@ -47,7 +60,7 @@ func (s *Service) UpdateTask(userId string, taskId string, taskReq util.TaskRequ
 
 	task, err := s.GetTask(userId, taskId)
 
-	if err == util.ErrTaskNotFound {
+	if err == ErrTaskNotFound {
 		return model.Task{}, err
 	}
 
@@ -65,7 +78,7 @@ func (s *Service) UpdateTask(userId string, taskId string, taskReq util.TaskRequ
 func (s *Service) GetTask(userId, taskId string) (model.Task, error) {
 	task, err := s.Store.GetTask(userId, taskId)
 	if err == store.ErrRecordNotFound {
-		return task, util.ErrTaskNotFound
+		return task, ErrTaskNotFound
 	}
 	return task, nil
 }
@@ -78,7 +91,7 @@ func (s *Service) RegisterUser(userReq util.UserRequest) (model.User, error) {
 
 	_, err := s.Store.GetUser(userReq.Email)
 	if err == nil {
-		return model.User{}, util.ErrUserExists
+		return model.User{}, ErrUserExists
 	}
 
 	user, err := model.NewUser(userReq.Email, userReq.Password)
@@ -97,12 +110,12 @@ func (s *Service) LoginUser(userReq util.UserRequest) (string, string, error) {
 
 	user, err := s.Store.GetUser(userReq.Email)
 	if err == store.ErrRecordNotFound {
-		return "", "", util.ErrInvalidCredentials
+		return "", "", ErrInvalidCredentials
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(userReq.Password))
 	if err != nil {
-		return "", "", util.ErrInvalidCredentials
+		return "", "", ErrInvalidCredentials
 	}
 
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
