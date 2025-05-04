@@ -25,6 +25,11 @@ type Store interface {
 	UpdateTask(model.Task) error
 	GetTask(string, string) (model.Task, error)
 	DeleteTask(string, string) error
+	ListLabels(string) ([]model.Label, error)
+	CreateLabel(model.Label) error
+	GetLabel(string, string) (model.Label, error)
+	UpdateLabel(model.Label) error
+	DeleteLabel(string, string) error
 	CreateUser(model.User) error
 	GetUser(string) (model.User, error)
 	CreateToken(model.Token) error
@@ -66,7 +71,7 @@ func isoToUnixTime(inputTime string) int64 {
 func unixToIsoTime(inputTime string) string {
 	inputTimeInt, _ := strconv.ParseInt(inputTime, 10, 64)
 	parsedTime := time.Unix(inputTimeInt, 0)
-	return parsedTime.Format(time.RFC3339)
+	return parsedTime.UTC().Format(time.RFC3339)
 }
 
 func (s *DatabaseStore) ListTasks(userId string) ([]model.Task, error) {
@@ -131,6 +136,75 @@ func (s *DatabaseStore) GetTask(userId string, taskId string) (model.Task, error
 
 func (s *DatabaseStore) DeleteTask(userId string, taskId string) error {
 	_, err := s.db.Exec("DELETE FROM tasks WHERE userId = $1 AND id = $2", userId, taskId)
+	if err != nil {
+		log.Printf("failed to delete record: %v", err)
+		return err
+	}
+	return nil
+}
+
+func (s *DatabaseStore) ListLabels(userId string) ([]model.Label, error) {
+	rows, err := s.db.Query("SELECT * from labels WHERE userId = $1", userId)
+	if err != nil {
+		log.Printf("error while running query: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+	labels := []model.Label{}
+	for rows.Next() {
+		var label model.Label
+		if err := rows.Scan(&label.Id, &label.Name, &label.Colour, &label.CreatedAt, &label.UpdatedAt, &label.UserId); err != nil {
+			log.Printf("error while scanning query result: %v", err)
+			return nil, err
+		}
+		label.CreatedAt = unixToIsoTime(label.CreatedAt)
+		label.UpdatedAt = unixToIsoTime(label.UpdatedAt)
+		labels = append(labels, label)
+	}
+	if err := rows.Err(); err != nil {
+		log.Printf("incomplete query result: %v", err)
+		return nil, err
+	}
+	return labels, nil
+}
+
+func (s *DatabaseStore) CreateLabel(label model.Label) error {
+	_, err := s.db.Exec("INSERT INTO labels (id, name, colour, createdAt, updatedAt, userId) VALUES ($1, $2, $3, $4, $5, $6)",
+		label.Id, label.Name, label.Colour, isoToUnixTime(label.CreatedAt), isoToUnixTime(label.UpdatedAt), label.UserId)
+	if err != nil {
+		log.Printf("failed to insert record: %v", err)
+		return err
+	}
+	return nil
+}
+
+func (s *DatabaseStore) GetLabel(userId string, labelId string) (model.Label, error) {
+	var label model.Label
+	row := s.db.QueryRow("SELECT * from labels WHERE userId = $1 AND id = $2", userId, labelId)
+	if err := row.Scan(&label.Id, &label.Name, &label.Colour, &label.CreatedAt, &label.UpdatedAt, &label.UserId); err != nil {
+		if err == sql.ErrNoRows {
+			return model.Label{}, ErrRecordNotFound
+		}
+		log.Printf("unable to retrieve task: %v", err)
+		return model.Label{}, err
+	}
+	label.CreatedAt = unixToIsoTime(label.CreatedAt)
+	label.UpdatedAt = unixToIsoTime(label.UpdatedAt)
+	return label, nil
+}
+
+func (s *DatabaseStore) UpdateLabel(label model.Label) error {
+	_, err := s.db.Exec("UPDATE labels SET name = $1, colour = $2, updatedAt = $3 WHERE userId = $4 AND id = $5",
+		label.Name, label.Colour, isoToUnixTime(label.UpdatedAt), label.UserId, label.Id)
+	if err != nil {
+		log.Printf("failed to update record: %v", err)
+		return err
+	}
+	return nil
+}
+
+func (s *DatabaseStore) DeleteLabel(userId string, labelId string) error {
+	_, err := s.db.Exec("DELETE FROM labels WHERE userId = $1 AND id = $2", userId, labelId)
 	if err != nil {
 		log.Printf("failed to delete record: %v", err)
 		return err

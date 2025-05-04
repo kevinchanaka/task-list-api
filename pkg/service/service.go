@@ -21,6 +21,10 @@ var (
 	ErrUpdateTaskFailed = errors.New("unable to update task")
 	ErrDeleteTaskFailed = errors.New("unable to delete task")
 
+	ErrLabelNotFound     = errors.New("label not found")
+	ErrUpdateLabelFailed = errors.New("unable to update label")
+	ErrDeleteLabelFailed = errors.New("unable to delete label")
+
 	ErrLoginFailed        = errors.New("unable to login")
 	ErrUserExists         = errors.New("email address already in-use")
 	ErrCreateUserFailed   = errors.New("unable to register user")
@@ -85,6 +89,52 @@ func (s *Service) GetTask(userId, taskId string) (model.Task, error) {
 
 func (s *Service) DeleteTask(userId, taskId string) error {
 	return s.Store.DeleteTask(userId, taskId)
+}
+
+func (s *Service) ListLabels(userId string) ([]model.Label, error) {
+	labels, err := s.Store.ListLabels(userId)
+	if err != nil {
+		return nil, err
+	}
+	return labels, err
+}
+
+func (s *Service) CreateLabel(userId string, labelReq model.LabelRequest) (model.Label, error) {
+	label := model.NewLabel(userId, labelReq.Name, labelReq.Colour)
+	if err := s.Store.CreateLabel(label); err != nil {
+		return label, err
+	}
+	return label, nil
+}
+
+func (s *Service) GetLabel(userId, labelId string) (model.Label, error) {
+	label, err := s.Store.GetLabel(userId, labelId)
+	if err == store.ErrRecordNotFound {
+		return label, ErrLabelNotFound
+	}
+	return label, nil
+}
+
+func (s *Service) UpdateLabel(userId string, labelId string, labelReq model.LabelRequest) (model.Label, error) {
+
+	label, err := s.GetLabel(userId, labelId)
+
+	if err == ErrLabelNotFound {
+		return model.Label{}, err
+	}
+
+	label.Name = labelReq.Name
+	label.Colour = labelReq.Colour
+	label.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+
+	if err := s.Store.UpdateLabel(label); err != nil {
+		return model.Label{}, err
+	}
+	return label, nil
+}
+
+func (s *Service) DeleteLabel(userId, labelId string) error {
+	return s.Store.DeleteLabel(userId, labelId)
 }
 
 func (s *Service) RegisterUser(userReq util.UserRequest) (model.User, error) {

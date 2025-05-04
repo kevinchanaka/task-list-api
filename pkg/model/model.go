@@ -11,12 +11,34 @@ import (
 
 type Task struct {
 	Id          string `json:"id"`
-	UserId      string
+	UserId      string `json:"userId"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Completed   bool   `json:"completed"`
 	CreatedAt   string `json:"createdAt"`
 	UpdatedAt   string `json:"updatedAt"`
+}
+
+type Label struct {
+	Id        string `json:"id"`
+	UserId    string `json:"userId"`
+	Name      string `json:"name"`
+	Colour    string `json:"colour"`
+	CreatedAt string `json:"createdAt"`
+	UpdatedAt string `json:"updatedAt"`
+}
+
+type LabelRequest struct {
+	Name   string `json:"name"`
+	Colour string `json:"colour"`
+}
+
+type LabelListResponse struct {
+	Labels []Label `json:"labels"`
+}
+
+type LabelResponse struct {
+	Label Label `json:"label"`
 }
 
 type User struct {
@@ -41,6 +63,18 @@ func NewTask(userId, name, description string) Task {
 		Completed:   false,
 		CreatedAt:   creationTime,
 		UpdatedAt:   creationTime,
+	}
+}
+
+func NewLabel(userId, name, colour string) Label {
+	creationTime := time.Now().UTC().Format(time.RFC3339)
+	return Label{
+		Id:        uuid.New().String(),
+		Name:      name,
+		Colour:    colour,
+		CreatedAt: creationTime,
+		UpdatedAt: creationTime,
+		UserId:    userId,
 	}
 }
 

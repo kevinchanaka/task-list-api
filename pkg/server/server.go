@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"example/task-list/pkg/model"
 	"example/task-list/pkg/service"
 	"example/task-list/pkg/util"
 	"log"
@@ -34,11 +35,18 @@ func NewServer(appService *service.Service, config util.Config) *Server {
 	checkAccessToken := createCheckTokenMiddleware("accessToken", config.AccessTokenSecret)
 
 	router.Handle("GET /hello", jsonHeader(http.HandlerFunc(appServer.hello)))
+
 	router.Handle("GET /tasks", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.getTasks))))
 	router.Handle("GET /tasks/{id}", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.getTask))))
 	router.Handle("POST /tasks", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.postTask))))
 	router.Handle("PUT /tasks/{id}", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.putTask))))
 	router.Handle("DELETE /tasks/{id}", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.deleteTask))))
+
+	router.Handle("GET /labels", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.getLabels))))
+	router.Handle("GET /labels/{id}", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.getLabel))))
+	router.Handle("POST /labels", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.postLabel))))
+	router.Handle("PUT /labels/{id}", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.putLabel))))
+	router.Handle("DELETE /labels/{id}", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.deleteLabel))))
 
 	router.Handle("POST /users/register", jsonHeader(http.HandlerFunc(appServer.postUser)))
 	router.Handle("POST /users/login", jsonHeader(http.HandlerFunc(appServer.loginUser)))
@@ -181,6 +189,75 @@ func (s *Server) deleteTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	json.NewEncoder(w).Encode(util.NewMsg("Task deleted"))
+}
+
+func (s *Server) getLabels(w http.ResponseWriter, r *http.Request) {
+	userId := getUserIdFromContext(r)
+
+	labels, err := s.Service.ListLabels(userId)
+	if err != nil {
+		httpError(w, err, http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(model.LabelListResponse{Labels: labels})
+}
+
+func (s *Server) getLabel(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	userId := getUserIdFromContext(r)
+
+	label, err := s.Service.GetLabel(userId, id)
+	if err == service.ErrTaskNotFound {
+		httpError(w, err, http.StatusNotFound)
+		return
+	} else if err != nil {
+		httpError(w, err, http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(model.LabelResponse{Label: label})
+}
+
+func (s *Server) postLabel(w http.ResponseWriter, r *http.Request) {
+	var labelReq model.LabelRequest
+	json.NewDecoder(r.Body).Decode(&labelReq)
+	userId := getUserIdFromContext(r)
+
+	label, err := s.Service.CreateLabel(userId, labelReq)
+	if err != nil {
+		httpError(w, err, http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(model.LabelResponse{Label: label})
+}
+
+func (s *Server) putLabel(w http.ResponseWriter, r *http.Request) {
+	var labelReq model.LabelRequest
+	json.NewDecoder(r.Body).Decode(&labelReq)
+
+	labelId := r.PathValue("id")
+	userId := getUserIdFromContext(r)
+
+	label, err := s.Service.UpdateLabel(userId, labelId, labelReq)
+	if err == service.ErrLabelNotFound {
+		httpError(w, err, http.StatusNotFound)
+		return
+	} else if err != nil {
+		httpError(w, service.ErrUpdateLabelFailed, http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(model.LabelResponse{Label: label})
+}
+
+func (s *Server) deleteLabel(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	userId := getUserIdFromContext(r)
+
+	err := s.Service.DeleteLabel(userId, id)
+	if err != nil {
+		httpError(w, service.ErrDeleteLabelFailed, http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(util.NewMsg("Label deleted"))
 }
 
 func (s *Server) postUser(w http.ResponseWriter, r *http.Request) {
