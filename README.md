@@ -6,8 +6,9 @@ Simple API to keep track of tasks
 
 - Implement task CRUD (done)
 - Refactor (done)
-- Testing
 - DI (done)
 - User authentication (done)
-- Labels for tasks
+- Labels for tasks (done)
 - DB migrations (defer)
+- Integration tests
+- Additional refactoring

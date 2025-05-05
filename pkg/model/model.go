@@ -10,13 +10,20 @@ import (
 )
 
 type Task struct {
-	Id          string `json:"id"`
-	UserId      string `json:"userId"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Completed   bool   `json:"completed"`
-	CreatedAt   string `json:"createdAt"`
-	UpdatedAt   string `json:"updatedAt"`
+	Id          string      `json:"id"`
+	UserId      string      `json:"userId"`
+	Name        string      `json:"name"`
+	Description string      `json:"description"`
+	Completed   bool        `json:"completed"`
+	CreatedAt   string      `json:"createdAt"`
+	UpdatedAt   string      `json:"updatedAt"`
+	Labels      []TaskLabel `json:"labels"`
+}
+
+type TaskLabel struct {
+	Id     string `json:"id"`
+	Name   string `json:"name"`
+	Colour string `json:"colour"`
 }
 
 type Label struct {
@@ -39,6 +46,11 @@ type LabelListResponse struct {
 
 type LabelResponse struct {
 	Label Label `json:"label"`
+}
+
+type TaskLabelIds struct {
+	TaskId   string   `json:"taskId"`
+	LabelIds []string `json:"labelIds"`
 }
 
 type User struct {

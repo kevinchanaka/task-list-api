@@ -37,8 +37,8 @@ func NewConfig() Config {
 	appConfig.RefreshTokenExpiry = time.Hour * 24 * 3
 
 	if appConfig.Environment == "development" {
-		appConfig.AccessTokenExpiry = time.Minute * 5
-		appConfig.RefreshTokenExpiry = time.Minute * 10
+		appConfig.AccessTokenExpiry = time.Minute * 10
+		appConfig.RefreshTokenExpiry = time.Minute * 20
 	}
 
 	return appConfig

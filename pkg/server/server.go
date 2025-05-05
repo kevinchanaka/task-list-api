@@ -41,6 +41,8 @@ func NewServer(appService *service.Service, config util.Config) *Server {
 	router.Handle("POST /tasks", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.postTask))))
 	router.Handle("PUT /tasks/{id}", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.putTask))))
 	router.Handle("DELETE /tasks/{id}", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.deleteTask))))
+	router.Handle("POST /tasks/attach", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.postLabelsToTask))))
+	router.Handle("POST /tasks/detach", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.deleteLabelsFromTask))))
 
 	router.Handle("GET /labels", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.getLabels))))
 	router.Handle("GET /labels/{id}", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.getLabel))))
@@ -189,6 +191,32 @@ func (s *Server) deleteTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	json.NewEncoder(w).Encode(util.NewMsg("Task deleted"))
+}
+
+func (s *Server) postLabelsToTask(w http.ResponseWriter, r *http.Request) {
+	var taskLabelIdsReq model.TaskLabelIds
+	userId := getUserIdFromContext(r)
+
+	json.NewDecoder(r.Body).Decode(&taskLabelIdsReq)
+	err := s.Service.AttachLabelsToTask(userId, taskLabelIdsReq)
+	if err != nil {
+		httpError(w, err, http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(util.NewMsg("Attached labels to task"))
+}
+
+func (s *Server) deleteLabelsFromTask(w http.ResponseWriter, r *http.Request) {
+	var taskLabelIdsReq model.TaskLabelIds
+	userId := getUserIdFromContext(r)
+
+	json.NewDecoder(r.Body).Decode(&taskLabelIdsReq)
+	err := s.Service.DetachLabelsFromTask(userId, taskLabelIdsReq)
+	if err != nil {
+		httpError(w, err, http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(util.NewMsg("Detached labels from task"))
 }
 
 func (s *Server) getLabels(w http.ResponseWriter, r *http.Request) {

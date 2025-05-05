@@ -25,6 +25,8 @@ type Store interface {
 	UpdateTask(model.Task) error
 	GetTask(string, string) (model.Task, error)
 	DeleteTask(string, string) error
+	AttachLabelsToTask(string, string, []string) error
+	DetachLabelsFromTask(string, string, []string) error
 	ListLabels(string) ([]model.Label, error)
 	CreateLabel(model.Label) error
 	GetLabel(string, string) (model.Label, error)
@@ -81,6 +83,7 @@ func (s *DatabaseStore) ListTasks(userId string) ([]model.Task, error) {
 		return nil, err
 	}
 	defer rows.Close()
+
 	tasks := []model.Task{}
 	for rows.Next() {
 		var task model.Task
@@ -90,6 +93,34 @@ func (s *DatabaseStore) ListTasks(userId string) ([]model.Task, error) {
 		}
 		task.CreatedAt = unixToIsoTime(task.CreatedAt)
 		task.UpdatedAt = unixToIsoTime(task.UpdatedAt)
+
+		// TODO: query for all labels in one go using IN condition or JOIN
+		rows, err := s.db.Query("SELECT labelId from tasks_labels_map WHERE taskId = $1", task.Id)
+		if err != nil {
+			log.Printf("error while running query: %v", err)
+			return nil, err
+		}
+		defer rows.Close()
+
+		labels := []model.TaskLabel{}
+		for rows.Next() {
+			var labelId string
+			if err := rows.Scan(&labelId); err != nil {
+				log.Printf("error while scanning query result: %v", err)
+				return nil, err
+			}
+			var label model.TaskLabel
+			row := s.db.QueryRow("SELECT id, name, colour from labels WHERE userId = $1 AND id = $2", userId, labelId)
+			if err := row.Scan(&label.Id, &label.Name, &label.Colour); err != nil {
+				if err == sql.ErrNoRows {
+					return nil, ErrRecordNotFound
+				}
+				log.Printf("unable to retrieve label: %v", err)
+				return nil, err
+			}
+			labels = append(labels, label)
+		}
+		task.Labels = labels
 		tasks = append(tasks, task)
 	}
 	if err := rows.Err(); err != nil {
@@ -131,6 +162,34 @@ func (s *DatabaseStore) GetTask(userId string, taskId string) (model.Task, error
 	}
 	task.CreatedAt = unixToIsoTime(task.CreatedAt)
 	task.UpdatedAt = unixToIsoTime(task.UpdatedAt)
+
+	rows, err := s.db.Query("SELECT labelId from tasks_labels_map WHERE taskId = $1", taskId)
+	if err != nil {
+		log.Printf("error while running query: %v", err)
+		return model.Task{}, err
+	}
+	defer rows.Close()
+
+	// TODO: query for all labels in one go using IN condition or JOIN
+	labels := []model.TaskLabel{}
+	for rows.Next() {
+		var labelId string
+		if err := rows.Scan(&labelId); err != nil {
+			log.Printf("error while scanning query result: %v", err)
+			return model.Task{}, err
+		}
+		var label model.TaskLabel
+		row := s.db.QueryRow("SELECT id, name, colour from labels WHERE userId = $1 AND id = $2", userId, labelId)
+		if err := row.Scan(&label.Id, &label.Name, &label.Colour); err != nil {
+			if err == sql.ErrNoRows {
+				return model.Task{}, ErrRecordNotFound
+			}
+			log.Printf("unable to retrieve label: %v", err)
+			return model.Task{}, err
+		}
+		labels = append(labels, label)
+	}
+	task.Labels = labels
 	return task, nil
 }
 
@@ -138,6 +197,54 @@ func (s *DatabaseStore) DeleteTask(userId string, taskId string) error {
 	_, err := s.db.Exec("DELETE FROM tasks WHERE userId = $1 AND id = $2", userId, taskId)
 	if err != nil {
 		log.Printf("failed to delete record: %v", err)
+		return err
+	}
+	return nil
+}
+
+func (s *DatabaseStore) AttachLabelsToTask(userId string, taskId string, labelIds []string) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		log.Printf("failed to begin transaction: %v", err)
+		return err
+	}
+
+	defer tx.Rollback()
+
+	for _, labelId := range labelIds {
+		_, err := tx.Exec("INSERT INTO tasks_labels_map (taskId, labelId) VALUES ($1, $2)", taskId, labelId)
+		if err != nil {
+			log.Printf("failed to insert record: %v", err)
+			return err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Printf("failed to commit transaction: %v", err)
+		return err
+	}
+	return nil
+}
+
+func (s *DatabaseStore) DetachLabelsFromTask(userId string, taskId string, labelIds []string) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		log.Printf("failed to begin transaction: %v", err)
+		return err
+	}
+
+	defer tx.Rollback()
+
+	for _, labelId := range labelIds {
+		_, err := tx.Exec("DELETE FROM tasks_labels_map WHERE taskId = $1 AND labelId = $2", taskId, labelId)
+		if err != nil {
+			log.Printf("failed to delete record: %v", err)
+			return err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Printf("failed to commit transaction: %v", err)
 		return err
 	}
 	return nil

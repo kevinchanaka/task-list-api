@@ -91,6 +91,16 @@ func (s *Service) DeleteTask(userId, taskId string) error {
 	return s.Store.DeleteTask(userId, taskId)
 }
 
+func (s *Service) AttachLabelsToTask(userId string, taskLabelIdsReq model.TaskLabelIds) error {
+	// TODO: check if task and labels exist (can do in DB layer)
+	return s.Store.AttachLabelsToTask(userId, taskLabelIdsReq.TaskId, taskLabelIdsReq.LabelIds)
+}
+
+func (s *Service) DetachLabelsFromTask(userId string, taskLabelIdsReq model.TaskLabelIds) error {
+	// TODO: check if task and labels exist (can do in DB layer)
+	return s.Store.DetachLabelsFromTask(userId, taskLabelIdsReq.TaskId, taskLabelIdsReq.LabelIds)
+}
+
 func (s *Service) ListLabels(userId string) ([]model.Label, error) {
 	labels, err := s.Store.ListLabels(userId)
 	if err != nil {

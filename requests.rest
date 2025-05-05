@@ -16,7 +16,7 @@ Content-Type: application/json
 
 ###
 
-GET http://localhost:5000/tasks/d2c8e5c1-7088-42e3-96de-a5f3a214351f
+GET http://localhost:5000/tasks/600a1314-852b-42d9-a335-04b89afd4eaa
 
 ###
 
@@ -96,3 +96,27 @@ Content-Type: application/json
 
 DELETE http://localhost:5000/labels/cbabf7df-6a33-4672-933b-c6b252c445ff
 Content-Type: application/json
+
+###
+
+POST http://localhost:5000/tasks/attach
+Content-Type: application/json
+
+{
+    "taskId": "600a1314-852b-42d9-a335-04b89afd4eaa",
+    "labelIds": [
+        "32b43180-3129-4937-ad19-0de9bfefa62f"
+    ]
+}
+
+###
+
+POST http://localhost:5000/tasks/detach
+Content-Type: application/json
+
+{
+    "taskId": "600a1314-852b-42d9-a335-04b89afd4eaa",
+    "labelIds": [
+        "32b43180-3129-4937-ad19-0de9bfefa62f"
+    ]
+}
