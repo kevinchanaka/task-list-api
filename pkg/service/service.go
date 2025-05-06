@@ -52,7 +52,7 @@ func (s *Service) ListTasks(userId string) ([]model.Task, error) {
 	return tasks, err
 }
 
-func (s *Service) CreateTask(userId string, taskReq util.TaskRequest) (model.Task, error) {
+func (s *Service) CreateTask(userId string, taskReq model.TaskRequest) (model.Task, error) {
 	task := model.NewTask(userId, taskReq.Name, taskReq.Description)
 	if err := s.Store.CreateTask(task); err != nil {
 		return task, err
@@ -60,7 +60,7 @@ func (s *Service) CreateTask(userId string, taskReq util.TaskRequest) (model.Tas
 	return task, nil
 }
 
-func (s *Service) UpdateTask(userId string, taskId string, taskReq util.TaskRequest) (model.Task, error) {
+func (s *Service) UpdateTask(userId string, taskId string, taskReq model.TaskRequest) (model.Task, error) {
 
 	task, err := s.GetTask(userId, taskId)
 
@@ -91,12 +91,12 @@ func (s *Service) DeleteTask(userId, taskId string) error {
 	return s.Store.DeleteTask(userId, taskId)
 }
 
-func (s *Service) AttachLabelsToTask(userId string, taskLabelIdsReq model.TaskLabelIds) error {
+func (s *Service) AttachLabelsToTask(userId string, taskLabelIdsReq model.TaskLabelIdsRequest) error {
 	// TODO: check if task and labels exist (can do in DB layer)
 	return s.Store.AttachLabelsToTask(userId, taskLabelIdsReq.TaskId, taskLabelIdsReq.LabelIds)
 }
 
-func (s *Service) DetachLabelsFromTask(userId string, taskLabelIdsReq model.TaskLabelIds) error {
+func (s *Service) DetachLabelsFromTask(userId string, taskLabelIdsReq model.TaskLabelIdsRequest) error {
 	// TODO: check if task and labels exist (can do in DB layer)
 	return s.Store.DetachLabelsFromTask(userId, taskLabelIdsReq.TaskId, taskLabelIdsReq.LabelIds)
 }
@@ -147,7 +147,7 @@ func (s *Service) DeleteLabel(userId, labelId string) error {
 	return s.Store.DeleteLabel(userId, labelId)
 }
 
-func (s *Service) RegisterUser(userReq util.UserRequest) (model.User, error) {
+func (s *Service) RegisterUser(userReq model.UserRequest) (model.User, error) {
 
 	_, err := s.Store.GetUser(userReq.Email)
 	if err == nil {
@@ -166,7 +166,7 @@ func (s *Service) RegisterUser(userReq util.UserRequest) (model.User, error) {
 	return user, nil
 }
 
-func (s *Service) LoginUser(userReq util.UserRequest) (string, string, error) {
+func (s *Service) LoginUser(userReq model.UserRequest) (string, string, error) {
 
 	user, err := s.Store.GetUser(userReq.Email)
 	if err == store.ErrRecordNotFound {

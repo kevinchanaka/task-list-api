@@ -12,3 +12,4 @@ Simple API to keep track of tasks
 - DB migrations (defer)
 - Integration tests
 - Additional refactoring
+- Improve error variables and error handling

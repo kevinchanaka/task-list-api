@@ -35,24 +35,6 @@ type Label struct {
 	UpdatedAt string `json:"updatedAt"`
 }
 
-type LabelRequest struct {
-	Name   string `json:"name"`
-	Colour string `json:"colour"`
-}
-
-type LabelListResponse struct {
-	Labels []Label `json:"labels"`
-}
-
-type LabelResponse struct {
-	Label Label `json:"label"`
-}
-
-type TaskLabelIds struct {
-	TaskId   string   `json:"taskId"`
-	LabelIds []string `json:"labelIds"`
-}
-
 type User struct {
 	Id           string `json:"id"`
 	Email        string `json:"email"`

@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"example/task-list/pkg/model"
 	"example/task-list/pkg/service"
 	"example/task-list/pkg/util"
@@ -109,6 +110,26 @@ func getUserIdFromContext(r *http.Request) string {
 	return r.Context().Value(ctxUserKey).(string)
 }
 
+func decodeAndValidate[T any](w http.ResponseWriter, r *http.Request) (T, error) {
+	var obj T
+	json.NewDecoder(r.Body).Decode(&obj)
+	if err := model.Validate(obj); err != nil {
+		log.Printf("validation failed: %v", err)
+		httpError(w, err, http.StatusBadRequest)
+		return obj, err
+	}
+	return obj, nil
+}
+
+func encode[T any](w http.ResponseWriter, obj T) {
+	w.Header().Add("Content-Type", "application/json")
+	err := json.NewEncoder(w).Encode(obj)
+	if err != nil {
+		log.Printf("failed to encode response: %v", err)
+		httpError(w, errors.New("failed to generate response"), http.StatusInternalServerError)
+	}
+}
+
 // HTTP handlers
 
 func (s *Server) hello(w http.ResponseWriter, r *http.Request) {
@@ -123,7 +144,7 @@ func (s *Server) getTasks(w http.ResponseWriter, r *http.Request) {
 		httpError(w, service.ErrGetTaskFailed, http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(util.TaskListResponse{Tasks: tasks})
+	encode(w, model.TaskListResponse{Tasks: tasks})
 }
 
 func (s *Server) getTask(w http.ResponseWriter, r *http.Request) {
@@ -138,14 +159,12 @@ func (s *Server) getTask(w http.ResponseWriter, r *http.Request) {
 		httpError(w, service.ErrListTasksFailed, http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(util.TaskResponse{Task: task})
+	encode(w, model.TaskResponse{Task: task})
 }
 
 func (s *Server) postTask(w http.ResponseWriter, r *http.Request) {
-	var taskReq util.TaskRequest
-	json.NewDecoder(r.Body).Decode(&taskReq)
-	if err := util.ValidateTaskRequest(taskReq); err != nil {
-		httpError(w, err, http.StatusBadRequest)
+	taskReq, err := decodeAndValidate[model.TaskRequest](w, r)
+	if err != nil {
 		return
 	}
 
@@ -156,14 +175,12 @@ func (s *Server) postTask(w http.ResponseWriter, r *http.Request) {
 		httpError(w, service.ErrCreateTaskFailed, http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(util.TaskResponse{Task: task})
+	encode(w, model.TaskResponse{Task: task})
 }
 
 func (s *Server) putTask(w http.ResponseWriter, r *http.Request) {
-	var taskReq util.TaskRequest
-	json.NewDecoder(r.Body).Decode(&taskReq)
-	if err := util.ValidateTaskRequest(taskReq); err != nil {
-		httpError(w, err, http.StatusBadRequest)
+	taskReq, err := decodeAndValidate[model.TaskRequest](w, r)
+	if err != nil {
 		return
 	}
 
@@ -178,7 +195,7 @@ func (s *Server) putTask(w http.ResponseWriter, r *http.Request) {
 		httpError(w, service.ErrUpdateTaskFailed, http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(util.TaskResponse{Task: task})
+	encode(w, model.TaskResponse{Task: task})
 }
 
 func (s *Server) deleteTask(w http.ResponseWriter, r *http.Request) {
@@ -190,33 +207,37 @@ func (s *Server) deleteTask(w http.ResponseWriter, r *http.Request) {
 		httpError(w, service.ErrDeleteTaskFailed, http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(util.NewMsg("Task deleted"))
+	encode(w, util.NewMsg("Task deleted"))
 }
 
 func (s *Server) postLabelsToTask(w http.ResponseWriter, r *http.Request) {
-	var taskLabelIdsReq model.TaskLabelIds
+	taskLabelIdsReq, err := decodeAndValidate[model.TaskLabelIdsRequest](w, r)
+	if err != nil {
+		return
+	}
 	userId := getUserIdFromContext(r)
 
-	json.NewDecoder(r.Body).Decode(&taskLabelIdsReq)
-	err := s.Service.AttachLabelsToTask(userId, taskLabelIdsReq)
+	err = s.Service.AttachLabelsToTask(userId, taskLabelIdsReq)
 	if err != nil {
 		httpError(w, err, http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(util.NewMsg("Attached labels to task"))
+	encode(w, util.NewMsg("Attached labels to task"))
 }
 
 func (s *Server) deleteLabelsFromTask(w http.ResponseWriter, r *http.Request) {
-	var taskLabelIdsReq model.TaskLabelIds
+	taskLabelIdsReq, err := decodeAndValidate[model.TaskLabelIdsRequest](w, r)
+	if err != nil {
+		return
+	}
 	userId := getUserIdFromContext(r)
 
-	json.NewDecoder(r.Body).Decode(&taskLabelIdsReq)
-	err := s.Service.DetachLabelsFromTask(userId, taskLabelIdsReq)
+	err = s.Service.DetachLabelsFromTask(userId, taskLabelIdsReq)
 	if err != nil {
 		httpError(w, err, http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(util.NewMsg("Detached labels from task"))
+	encode(w, util.NewMsg("Detached labels from task"))
 }
 
 func (s *Server) getLabels(w http.ResponseWriter, r *http.Request) {
@@ -227,7 +248,7 @@ func (s *Server) getLabels(w http.ResponseWriter, r *http.Request) {
 		httpError(w, err, http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(model.LabelListResponse{Labels: labels})
+	encode(w, model.LabelListResponse{Labels: labels})
 }
 
 func (s *Server) getLabel(w http.ResponseWriter, r *http.Request) {
@@ -242,12 +263,14 @@ func (s *Server) getLabel(w http.ResponseWriter, r *http.Request) {
 		httpError(w, err, http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(model.LabelResponse{Label: label})
+	encode(w, model.LabelResponse{Label: label})
 }
 
 func (s *Server) postLabel(w http.ResponseWriter, r *http.Request) {
-	var labelReq model.LabelRequest
-	json.NewDecoder(r.Body).Decode(&labelReq)
+	labelReq, err := decodeAndValidate[model.LabelRequest](w, r)
+	if err != nil {
+		return
+	}
 	userId := getUserIdFromContext(r)
 
 	label, err := s.Service.CreateLabel(userId, labelReq)
@@ -255,13 +278,14 @@ func (s *Server) postLabel(w http.ResponseWriter, r *http.Request) {
 		httpError(w, err, http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(model.LabelResponse{Label: label})
+	encode(w, model.LabelResponse{Label: label})
 }
 
 func (s *Server) putLabel(w http.ResponseWriter, r *http.Request) {
-	var labelReq model.LabelRequest
-	json.NewDecoder(r.Body).Decode(&labelReq)
-
+	labelReq, err := decodeAndValidate[model.LabelRequest](w, r)
+	if err != nil {
+		return
+	}
 	labelId := r.PathValue("id")
 	userId := getUserIdFromContext(r)
 
@@ -289,8 +313,10 @@ func (s *Server) deleteLabel(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) postUser(w http.ResponseWriter, r *http.Request) {
-	var userReq util.UserRequest
-	json.NewDecoder(r.Body).Decode(&userReq) // TODO: validation
+	userReq, err := decodeAndValidate[model.UserRequest](w, r)
+	if err != nil {
+		return
+	}
 
 	user, err := s.Service.RegisterUser(userReq)
 	if err == service.ErrUserExists {
@@ -300,12 +326,14 @@ func (s *Server) postUser(w http.ResponseWriter, r *http.Request) {
 		httpError(w, service.ErrCreateUserFailed, http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(util.UserResponse{User: user})
+	encode(w, model.UserResponse{User: user})
 }
 
 func (s *Server) loginUser(w http.ResponseWriter, r *http.Request) {
-	var userReq util.UserRequest
-	json.NewDecoder(r.Body).Decode(&userReq) // TODO: validation
+	userReq, err := decodeAndValidate[model.UserRequest](w, r)
+	if err != nil {
+		return
+	}
 
 	accessToken, refreshToken, err := s.Service.LoginUser(userReq)
 	if err == service.ErrInvalidCredentials {
@@ -337,7 +365,7 @@ func (s *Server) loginUser(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, accessTokenCookie)
 	http.SetCookie(w, refreshTokenCookie)
 
-	json.NewEncoder(w).Encode(util.NewMsg("Login successful"))
+	encode(w, util.NewMsg("Login successful"))
 }
 
 func (s *Server) logoutUser(w http.ResponseWriter, r *http.Request) {
@@ -366,7 +394,7 @@ func (s *Server) logoutUser(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, clearedAccessTokenCookie)
 	http.SetCookie(w, clearedRefreshTokenCookie)
 
-	json.NewEncoder(w).Encode(util.NewMsg("Logout successful"))
+	encode(w, util.NewMsg("Logout successful"))
 }
 
 func (s *Server) createAccessToken(w http.ResponseWriter, r *http.Request) {
@@ -395,5 +423,5 @@ func (s *Server) createAccessToken(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, accessTokenCookie)
 
-	json.NewEncoder(w).Encode(util.NewMsg("Credentials refreshed"))
+	encode(w, util.NewMsg("Credentials refreshed"))
 }
