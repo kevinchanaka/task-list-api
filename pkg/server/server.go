@@ -35,26 +35,26 @@ func NewServer(appService *service.Service, config util.Config) *Server {
 
 	checkAccessToken := createCheckTokenMiddleware("accessToken", config.AccessTokenSecret)
 
-	router.Handle("GET /hello", jsonHeader(http.HandlerFunc(appServer.hello)))
+	router.Handle("GET /hello", http.HandlerFunc(appServer.hello))
 
-	router.Handle("GET /tasks", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.getTasks))))
-	router.Handle("GET /tasks/{id}", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.getTask))))
-	router.Handle("POST /tasks", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.postTask))))
-	router.Handle("PUT /tasks/{id}", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.putTask))))
-	router.Handle("DELETE /tasks/{id}", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.deleteTask))))
-	router.Handle("POST /tasks/attach", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.postLabelsToTask))))
-	router.Handle("POST /tasks/detach", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.deleteLabelsFromTask))))
+	router.Handle("GET /tasks", checkAccessToken(http.HandlerFunc(appServer.getTasks)))
+	router.Handle("GET /tasks/{id}", checkAccessToken(http.HandlerFunc(appServer.getTask)))
+	router.Handle("POST /tasks", checkAccessToken(http.HandlerFunc(appServer.postTask)))
+	router.Handle("PUT /tasks/{id}", checkAccessToken(http.HandlerFunc(appServer.putTask)))
+	router.Handle("DELETE /tasks/{id}", checkAccessToken(http.HandlerFunc(appServer.deleteTask)))
+	router.Handle("POST /tasks/attach", checkAccessToken(http.HandlerFunc(appServer.postLabelsToTask)))
+	router.Handle("POST /tasks/detach", checkAccessToken(http.HandlerFunc(appServer.deleteLabelsFromTask)))
 
-	router.Handle("GET /labels", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.getLabels))))
-	router.Handle("GET /labels/{id}", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.getLabel))))
-	router.Handle("POST /labels", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.postLabel))))
-	router.Handle("PUT /labels/{id}", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.putLabel))))
-	router.Handle("DELETE /labels/{id}", jsonHeader(checkAccessToken(http.HandlerFunc(appServer.deleteLabel))))
+	router.Handle("GET /labels", checkAccessToken(http.HandlerFunc(appServer.getLabels)))
+	router.Handle("GET /labels/{id}", checkAccessToken(http.HandlerFunc(appServer.getLabel)))
+	router.Handle("POST /labels", checkAccessToken(http.HandlerFunc(appServer.postLabel)))
+	router.Handle("PUT /labels/{id}", checkAccessToken(http.HandlerFunc(appServer.putLabel)))
+	router.Handle("DELETE /labels/{id}", checkAccessToken(http.HandlerFunc(appServer.deleteLabel)))
 
-	router.Handle("POST /users/register", jsonHeader(http.HandlerFunc(appServer.postUser)))
-	router.Handle("POST /users/login", jsonHeader(http.HandlerFunc(appServer.loginUser)))
-	router.Handle("POST /users/logout", jsonHeader(http.HandlerFunc(appServer.logoutUser)))
-	router.Handle("POST /users/token", jsonHeader(http.HandlerFunc(appServer.createAccessToken)))
+	router.Handle("POST /users/register", http.HandlerFunc(appServer.postUser))
+	router.Handle("POST /users/login", http.HandlerFunc(appServer.loginUser))
+	router.Handle("POST /users/logout", http.HandlerFunc(appServer.logoutUser))
+	router.Handle("POST /users/token", http.HandlerFunc(appServer.createAccessToken))
 	return appServer
 }
 
