@@ -116,7 +116,7 @@ func assertNotEqual[T comparable](t *testing.T, got T, want T) {
 	}
 }
 
-func assertMessageExists(t *testing.T, got util.Message) {
+func assertMessageExists(t *testing.T, got model.Message) {
 	if got.Message == "" {
 		t.Errorf("Expected message to be set")
 	}
@@ -147,7 +147,7 @@ func TestUserEndpoints(t *testing.T) {
 		cleanDatabase(t, config)
 		auth := createAndLoginTestUser(t, appServer)
 		w := serveAuthRequest(appServer, auth, http.MethodPost, "/users/token", nil)
-		response := unmarshal[util.Message](t, w.Body)
+		response := unmarshal[model.Message](t, w.Body)
 
 		assertMessageExists(t, response)
 
@@ -161,7 +161,7 @@ func TestUserEndpoints(t *testing.T) {
 		cleanDatabase(t, config)
 		auth := createAndLoginTestUser(t, appServer)
 		w := serveAuthRequest(appServer, auth, http.MethodPost, "/users/logout", nil)
-		response := unmarshal[util.Message](t, w.Body)
+		response := unmarshal[model.Message](t, w.Body)
 
 		assertMessageExists(t, response)
 
@@ -245,12 +245,12 @@ func TestLabelEndpoints(t *testing.T) {
 
 		reqPath := fmt.Sprintf("/labels/%s", testLabelResponse.Label.Id)
 		w := serveAuthRequest(appServer, auth, http.MethodDelete, reqPath, nil)
-		response := unmarshal[util.Message](t, w.Body)
+		response := unmarshal[model.Message](t, w.Body)
 
 		assertMessageExists(t, response)
 
 		w = serveAuthRequest(appServer, auth, http.MethodGet, reqPath, nil)
-		response = unmarshal[util.Message](t, w.Body)
+		response = unmarshal[model.Message](t, w.Body)
 
 		assertMessageExists(t, response)
 	})
@@ -296,7 +296,7 @@ func TestTaskEndpoints(t *testing.T) {
 
 		payload := marshal(t, model.TaskLabelIdsRequest{TaskId: testTaskResponse.Task.Id, LabelIds: []string{testLabelResponse.Label.Id}})
 		w := serveAuthRequest(appServer, auth, http.MethodPost, "/tasks/attach", strings.NewReader(payload))
-		response := unmarshal[util.Message](t, w.Body)
+		response := unmarshal[model.Message](t, w.Body)
 		assertMessageExists(t, response)
 
 		reqPath := fmt.Sprintf("/tasks/%s", testTaskResponse.Task.Id)
@@ -313,11 +313,11 @@ func TestTaskEndpoints(t *testing.T) {
 		testTaskResponse := createTestObject[model.TaskRequest, model.TaskResponse](t, appServer, auth, "/tasks", testTask)
 		testLabelResponse := createTestObject[model.LabelRequest, model.LabelResponse](t, appServer, auth, "/labels", testLabel)
 		taskAttachObj := model.TaskLabelIdsRequest{TaskId: testTaskResponse.Task.Id, LabelIds: []string{testLabelResponse.Label.Id}}
-		createTestObject[model.TaskLabelIdsRequest, util.Message](t, appServer, auth, "/tasks/attach", taskAttachObj)
+		createTestObject[model.TaskLabelIdsRequest, model.Message](t, appServer, auth, "/tasks/attach", taskAttachObj)
 
 		payload := marshal(t, taskAttachObj)
 		w := serveAuthRequest(appServer, auth, http.MethodPost, "/tasks/detach", strings.NewReader(payload))
-		response := unmarshal[util.Message](t, w.Body)
+		response := unmarshal[model.Message](t, w.Body)
 		assertMessageExists(t, response)
 
 		reqPath := fmt.Sprintf("/tasks/%s", testTaskResponse.Task.Id)
@@ -349,12 +349,12 @@ func TestTaskEndpoints(t *testing.T) {
 
 		reqPath := fmt.Sprintf("/tasks/%s", testTaskResponse.Task.Id)
 		w := serveAuthRequest(appServer, auth, http.MethodDelete, reqPath, nil)
-		response := unmarshal[util.Message](t, w.Body)
+		response := unmarshal[model.Message](t, w.Body)
 
 		assertMessageExists(t, response)
 
 		w = serveAuthRequest(appServer, auth, http.MethodGet, reqPath, nil)
-		response = unmarshal[util.Message](t, w.Body)
+		response = unmarshal[model.Message](t, w.Body)
 
 		assertMessageExists(t, response)
 	})

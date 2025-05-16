@@ -64,14 +64,7 @@ func httpError(w http.ResponseWriter, err error, code int) {
 	errMessage := err.Error()
 	message := strings.ToUpper(errMessage[:1]) + errMessage[1:]
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(util.NewMsg(message))
-}
-
-func jsonHeader(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Content-Type", "application/json")
-		next.ServeHTTP(w, r)
-	})
+	json.NewEncoder(w).Encode(model.NewMsg(message))
 }
 
 func getCookie(r *http.Request, cookieHeader string) string {
@@ -133,7 +126,7 @@ func encode[T any](w http.ResponseWriter, obj T) {
 // HTTP handlers
 
 func (s *Server) hello(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(util.NewMsg("Hello World!"))
+	json.NewEncoder(w).Encode(model.NewMsg("Hello World!"))
 }
 
 func (s *Server) getTasks(w http.ResponseWriter, r *http.Request) {
@@ -207,7 +200,7 @@ func (s *Server) deleteTask(w http.ResponseWriter, r *http.Request) {
 		httpError(w, service.ErrDeleteTaskFailed, http.StatusInternalServerError)
 		return
 	}
-	encode(w, util.NewMsg("Task deleted"))
+	encode(w, model.NewMsg("Task deleted"))
 }
 
 func (s *Server) postLabelsToTask(w http.ResponseWriter, r *http.Request) {
@@ -222,7 +215,7 @@ func (s *Server) postLabelsToTask(w http.ResponseWriter, r *http.Request) {
 		httpError(w, err, http.StatusInternalServerError)
 		return
 	}
-	encode(w, util.NewMsg("Attached labels to task"))
+	encode(w, model.NewMsg("Attached labels to task"))
 }
 
 func (s *Server) deleteLabelsFromTask(w http.ResponseWriter, r *http.Request) {
@@ -237,7 +230,7 @@ func (s *Server) deleteLabelsFromTask(w http.ResponseWriter, r *http.Request) {
 		httpError(w, err, http.StatusInternalServerError)
 		return
 	}
-	encode(w, util.NewMsg("Detached labels from task"))
+	encode(w, model.NewMsg("Detached labels from task"))
 }
 
 func (s *Server) getLabels(w http.ResponseWriter, r *http.Request) {
@@ -309,7 +302,7 @@ func (s *Server) deleteLabel(w http.ResponseWriter, r *http.Request) {
 		httpError(w, service.ErrDeleteLabelFailed, http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(util.NewMsg("Label deleted"))
+	json.NewEncoder(w).Encode(model.NewMsg("Label deleted"))
 }
 
 func (s *Server) postUser(w http.ResponseWriter, r *http.Request) {
@@ -365,7 +358,7 @@ func (s *Server) loginUser(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, accessTokenCookie)
 	http.SetCookie(w, refreshTokenCookie)
 
-	encode(w, util.NewMsg("Login successful"))
+	encode(w, model.NewMsg("Login successful"))
 }
 
 func (s *Server) logoutUser(w http.ResponseWriter, r *http.Request) {
@@ -394,7 +387,7 @@ func (s *Server) logoutUser(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, clearedAccessTokenCookie)
 	http.SetCookie(w, clearedRefreshTokenCookie)
 
-	encode(w, util.NewMsg("Logout successful"))
+	encode(w, model.NewMsg("Logout successful"))
 }
 
 func (s *Server) createAccessToken(w http.ResponseWriter, r *http.Request) {
@@ -423,5 +416,5 @@ func (s *Server) createAccessToken(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, accessTokenCookie)
 
-	encode(w, util.NewMsg("Credentials refreshed"))
+	encode(w, model.NewMsg("Credentials refreshed"))
 }
