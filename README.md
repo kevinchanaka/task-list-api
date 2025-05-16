@@ -10,6 +10,6 @@ Simple API to keep track of tasks
 - User authentication (done)
 - Labels for tasks (done)
 - DB migrations (defer)
-- Integration tests
+- Integration tests (done)
 - Additional refactoring
-- Improve error variables and error handling
+- Improve error variables and error handling (done)

@@ -27,7 +27,7 @@ func Validate[T any](obj T) error {
 type TaskRequest struct {
 	Name        string `json:"name" validate:"required"`
 	Description string `json:"description" validate:"required"`
-	Completed   bool   `json:"completed" validate:"required"`
+	Completed   bool   `json:"completed"`
 }
 
 type TaskListResponse struct {
